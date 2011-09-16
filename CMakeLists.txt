@@ -53,7 +53,7 @@ set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 
 find_package(OgreOggSound REQUIRED)
 find_package(Bullet REQUIRED)
-find_package(CEGUI REQUIRED COMPONENTS Ogre QUIET)
+find_package(CEGUI REQUIRED COMPONENTS Ogre)
 
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${OIS_INCLUDE_DIRS})

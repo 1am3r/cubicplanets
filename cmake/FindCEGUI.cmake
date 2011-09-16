@@ -3,7 +3,7 @@
 # This module defines
 # CEGUI_FOUND, if false, do not try to link to CEGUI
 # CEGUI_LIBRARIES, where to find the librarys
-# CEGUI_INCLUDE_DIRS, where to find the headers
+# CEGUI_INCLUDE_DIR, where to find the headers
 #
 # $CEGUI_ROOT is an environment variable that would
 # correspond to the ./configure --prefix=$CEGUI_ROOT
@@ -14,12 +14,8 @@
 #
 # 2011-07-21 Created by Frederik vom Hofe using the findSFML.cmake versions from David Guthrie with code from Robert Osfield.
 
-SET(CEGUI_FOUND "YES")
-SET(CEGUI_LIBRARIES "")
-SET(CEGUI_INCLUDE_DIRS "")
-
 SET( CEGUI_ROOT $ENV{CEGUI_ROOT} )
-IF((WIN32 OR WIN64) AND NOT(CYGWIN))
+IF(MSVC)
    # Convert backslashes to slashes
    STRING(REGEX REPLACE "\\\\" "/" CEGUI_ROOT "${CEGUI_ROOT}")
 ENDIF()
@@ -49,34 +45,16 @@ MACRO(HELPER_GET_CASE_FROM_LIST SEARCHSTR LOOKUPLIST RESULTSTR)
    ENDFOREACH()
 ENDMACRO()
 
-#********** First we locate the include directorys ********** ********** ********** **********
 SET( CEGUI_INCLUDE_SEARCH_DIR
    ${CEGUI_ROOT}/include
    ${CEGUI_ROOT}/cegui/include
-   ~/Library/Frameworks
-   /Library/Frameworks
-   /usr/local/include
-   /usr/include
-   /sw/include # Fink
-   /opt/local/include # DarwinPorts
-   /opt/csw/include # Blastwave
-   /opt/include
-   /usr/freeware/include
 )
 
-#helper
-MACRO(FIND_PATH_HELPER FILENAME DIR SUFFIX)
-   FIND_PATH(${FILENAME}_DIR ${FILENAME} PATHS ${${DIR}} PATH_SUFFIXES ${SUFFIX})
-   IF(NOT ${FILENAME}_DIR)
-      MESSAGE("Could not located ${FILENAME}")
-      SET(CEGUI_FOUND "NO")
-   ELSE()
-      MESSAGE("${FILENAME} : ${${FILENAME}_DIR}")
-      LIST(APPEND CEGUI_INCLUDE_DIRS ${${FILENAME}_DIR})
-   ENDIF()
-ENDMACRO()
-
-FIND_PATH_HELPER(CEGUI.h CEGUI_INCLUDE_SEARCH_DIR CEGUI)
+find_path(CEGUI_INCLUDE_DIR NAMES CEGUI.h
+  HINTS
+    ${CEGUI_INCLUDE_SEARCH_DIR}
+  PATH_SUFFIXES cegui
+)
 
 IF("${CEGUI_FIND_COMPONENTS}" STREQUAL "")
    MESSAGE("ERROR: No CEGUI renderer selected. \n\nSelect a renderer by including it's name in the component list:\n\ne.g. Find_Package(CEGUI REQUIRED COMPONENTS OPENGL)\n\nCEGUI renderers:")
@@ -87,28 +65,6 @@ IF("${CEGUI_FIND_COMPONENTS}" STREQUAL "")
    MESSAGE(SEND_ERROR "Select at last one renderer!" )
 ENDIF()
 
-FOREACH(COMPONENT ${CEGUI_FIND_COMPONENTS})
-   HELPER_GET_CASE_FROM_LIST( ${COMPONENT} RENDER_NAME COMPONENT_CASE)
-   FIND_PATH_HELPER( "CEGUI${COMPONENT_CASE}Renderer.h" "CEGUI_INCLUDE_SEARCH_DIR" "CEGUI/RendererModules/${COMPONENT_CASE}/;RendererModules/${COMPONENT_CASE}/" )
-ENDFOREACH(COMPONENT)
-
-IF (APPLE)
-   FIND_PATH(CEGUI_FRAMEWORK_DIR CEGUI.h
-     PATHS
-       ~/Library/Frameworks/CEGUI.framework/Headers
-       /Library/Frameworks/CEGUI.framework/Headers
-       ${DELTA3D_EXT_DIR}/Frameworks/CEGUI.framework/Headers
-)
-ENDIF (APPLE)
-
-IF(CEGUI_FRAMEWORK_DIR)
-   LIST(APPEND CEGUI_INCLUDE_DIRS ${CEGUI_FRAMEWORK_DIR})
-ELSE()
-   LIST(APPEND CEGUI_INCLUDE_DIRS ${CEGUI_FRAMEWORK_DIR}/CEGUI)
-ENDIF()
-
-
-#********** Then we locate the Librarys ********** ********** ********** **********
 SET( CEGUI_LIBRARIES_SEARCH_DIR
    ${CEGUI_ROOT}/lib
         ${CEGUI_ROOT}
@@ -124,31 +80,46 @@ SET( CEGUI_LIBRARIES_SEARCH_DIR
         /usr/freeware/lib64
 )
 
-#helper
-MACRO(FIND_LIBRARY_HELPER FILENAME DIR)
-   FIND_LIBRARY(${FILENAME}_DIR NAMES ${FILENAME} PATHS ${${DIR}})
-   IF(NOT ${FILENAME}_DIR)
-      MESSAGE("Could not located ${FILENAME}")
-      SET(CEGUI_FOUND "NO")
-   ELSE()
-      MESSAGE("${FILENAME} : ${${FILENAME}_DIR}")
-      LIST(APPEND CEGUI_LIBRARIES ${${FILENAME}_DIR})
-   ENDIF()
-ENDMACRO()
+macro(_FIND_CEGUI_LIBRARY _var)
+  find_library(${_var}
+     NAMES 
+        ${ARGN}
+     HINTS
+        ${CEGUI_LIBRARIES_SEARCH_DIR}
+     PATH_SUFFIXES "" debug release relwithdebinfo minsizerel
+  )
+  mark_as_advanced(${_var})
+endmacro()
 
-FIND_LIBRARY_HELPER( CEGUIBase CEGUI_LIBRARIES_SEARCH_DIR )
+macro(_CEGUI_APPEND_LIBRARIES _list _release)
+  set(_debug ${_release}_DEBUG)
+  if(${_debug})
+    set(${_list} ${${_list}} optimized ${${_release}} debug ${${_debug}})
+  else()
+    set(${_list} ${${_list}} ${${_release}})
+  endif()
+endmacro()
+
+_FIND_CEGUI_LIBRARY(CEGUIBASE_LIBRARY CEGUIBase)
+_FIND_CEGUI_LIBRARY(CEGUIBASE_LIBRARY_DEBUG CEGUIBase_d)
 
 FOREACH(COMPONENT ${CEGUI_FIND_COMPONENTS})
-   HELPER_GET_CASE_FROM_LIST( ${COMPONENT} RENDER_NAME COMPONENT_CASE)
-   MESSAGE("Looking for lib: CEGUI${COMPONENT_CASE}Renderer")
-   FIND_LIBRARY_HELPER( CEGUI${COMPONENT_CASE}Renderer "CEGUI_LIBRARIES_SEARCH_DIR" CEGUI)
+  HELPER_GET_CASE_FROM_LIST( ${COMPONENT} RENDER_NAME COMPONENT_CASE)
+  _FIND_CEGUI_LIBRARY(CEGUI${COMPONENT_CASE}Renderer_LIBRARY CEGUI${COMPONENT_CASE}Renderer)
+  _FIND_CEGUI_LIBRARY(CEGUI${COMPONENT_CASE}Renderer_LIBRARY_DEBUG CEGUI${COMPONENT_CASE}Renderer_d)
+  LIST(APPEND _CEGUI_FOUND_RENDERERS CEGUI${COMPONENT_CASE}Renderer_LIBRARY)
 ENDFOREACH(COMPONENT)
 
-#********** And we are done ********** ********** ********** ********** ********** ********** ********** **********
-
-IF(NOT CEGUI_FOUND)
-   MESSAGE(SEND_ERROR "Error(s) during CEGUI dedection!")
-ENDIF()
-
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(CEGUI DEFAULT_MSG CEGUI_LIBRARIES CEGUI_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(CEGUI DEFAULT_MSG CEGUIBASE_LIBRARY _CEGUI_FOUND_RENDERERS CEGUI_INCLUDE_DIR)
+
+set(CEGUI_INCLUDE_DIRS ${CEGUI_INCLUDE_DIR})
+if(CEGUI_FOUND)
+  _CEGUI_APPEND_LIBRARIES(CEGUI_LIBRARIES CEGUIBASE_LIBRARY)
+  FOREACH(COMPONENT ${CEGUI_FIND_COMPONENTS})
+    HELPER_GET_CASE_FROM_LIST( ${COMPONENT} RENDER_NAME COMPONENT_CASE)
+    _CEGUI_APPEND_LIBRARIES(CEGUI_LIBRARIES CEGUI${COMPONENT_CASE}Renderer_LIBRARY)
+  ENDFOREACH(COMPONENT)
+endif()
+
+
