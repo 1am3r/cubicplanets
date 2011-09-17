@@ -13,7 +13,7 @@ class ChunkPillar;
 class ChunkStorage
 {
 public:
-	static const uint8_t ActiveChunks = 32;
+	static const uint16_t ActiveChunks = 64;
 
 	ChunkStorage(World& level);
 	~ChunkStorage();
@@ -65,7 +65,7 @@ public:
 	bool heightMapSet;
 
 	wCoord heightMap[Chunk::ChunkSizeX][Chunk::ChunkSizeZ];
-	Chunk* mChunks[32];
+	Chunk* mChunks[128];
 
 public:
 	ChunkPillar(ChunkStorage& store) :

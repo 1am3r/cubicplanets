@@ -129,7 +129,7 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 	//mLevel->updatePlayerPosition((int32_t) pos.x(), (int32_t) pos.y(),(int32_t) pos.z());
 	Ogre::Vector3 camPos = mCamNode->getPosition();
-	mLevel->updatePlayerPosition((int32_t) camPos.x, (int32_t) 0, (int32_t) camPos.z);
+	mLevel->updatePlayerPosition((int32_t) camPos.x, (int32_t) camPos.y, (int32_t) camPos.z);
 
 	mHud->update();
 

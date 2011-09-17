@@ -16,11 +16,11 @@ World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 
 	mChunkStore = new ChunkStorage(*this);
 
-	mRange = 4;
+	mRange = 6;
 	mDimension = (mRange * 2 + 1);
 
-	mChunks = new Chunk*[mDimension * mDimension];
-	memset(mChunks, 0, sizeof(Chunk*) * mDimension * mDimension);
+	mChunks = new Chunk*[mDimension * mDimension * mDimension];
+	memset(mChunks, 0, sizeof(Chunk*) * mDimension * mDimension * mDimension);
 
 	
 
@@ -97,9 +97,8 @@ void World::prepareSpawnRegion()
 		{
 			for (int16_t y = 0; y < mDimension; y++)
 			{
-				Chunk* newChunk = getChunk(x + mCurX, y, z + mCurZ);
-				if (y == 0)
-					mChunks[x * mDimension + z] = newChunk;
+				Chunk* newChunk = getChunk(x + mCurX, y + mCurY, z + mCurZ);
+				mChunks[(x * mDimension + z) * mDimension + y] = newChunk;
 			}
 		}
 	}
@@ -108,9 +107,12 @@ void World::prepareSpawnRegion()
 	{
 		for (int32_t zIt = mCurZ; zIt < mCurZ + mDimension; zIt++)
 		{
-			Chunk* curChunk = getChunk(xIt, 0, zIt);
-			curChunk->activateEntity();
-			curChunk->activatePhysicsBody();
+			for (int32_t yIt = mCurY; yIt < mCurY + mDimension; yIt++)
+			{
+				Chunk* curChunk = getChunk(xIt, yIt, zIt);
+				curChunk->activateEntity();
+				curChunk->activatePhysicsBody();
+			}
 		}
 	}
 }
@@ -157,7 +159,7 @@ void World::moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff)
 {
 	uint16_t range = mRange;
 	
-	Chunk** tempArray = new Chunk*[mDimension * mDimension];
+	Chunk** tempArray = new Chunk*[mDimension * mDimension * mDimension];
 
 	int32_t xNew = mCurX + xDiff;
 	int32_t yNew = mCurY + yDiff;
@@ -167,22 +169,24 @@ void World::moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff)
 	{
 		for (int16_t z = 0; z < mDimension; z++)
 		{
-			if (((x + mCurX - xNew) < 0) || ((x + mCurX - xNew) >= mDimension) ||
-				((z + mCurZ - zNew) < 0) || ((z + mCurZ - zNew) >= mDimension))
+			for (int16_t y = 0; y < mDimension; y++)
 			{
-				Chunk* curChunk = mChunks[x * mDimension + z];
-				
-				curChunk->deactivateEntity();
+				if (((x + mCurX - xNew) < 0) || ((x + mCurX - xNew) >= mDimension) ||
+					((z + mCurZ - zNew) < 0) || ((z + mCurZ - zNew) >= mDimension) ||
+					((y + mCurY - yNew) < 0) || ((y + mCurY - yNew) >= mDimension))
+				{
+					Chunk* curChunk = mChunks[(x * mDimension + z) * mDimension + y];
+					if (curChunk != 0) curChunk->deactivateEntity();
+					mChunks[(x * mDimension + z) * mDimension + y] = 0;
+				}
 
-				mChunks[x * mDimension + z] = 0;
+				Chunk* newChunk = getChunk(x + xNew, y + yNew, z + zNew);
+				tempArray[(x * mDimension + z) * mDimension + y] = newChunk;
 			}
-
-			Chunk* newChunk = getChunk(x + xNew, 0, z + zNew);
-			tempArray[x * mDimension + z] = newChunk;
 		}
 	}
 
-	memcpy(mChunks, tempArray, sizeof(Chunk*) * mDimension * mDimension);
+	memcpy(mChunks, tempArray, sizeof(Chunk*) * mDimension * mDimension * mDimension);
 	delete tempArray;
 
 	mCurX = xNew;
@@ -193,11 +197,13 @@ void World::moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff)
 	{
 		for (int16_t z = 0; z < mDimension; z++)
 		{
-			Chunk* newChunk = mChunks[x * mDimension + z];
-			if (!newChunk->isChunkActive()) {
-				newChunk->activateEntity();
-				newChunk->activatePhysicsBody();
-
+			for (int16_t y = 0; y < mDimension; y++)
+			{
+				Chunk* newChunk = mChunks[(x * mDimension + z) * mDimension + y];
+				if (!newChunk->isChunkActive()) {
+					newChunk->activateEntity();
+					newChunk->activatePhysicsBody();
+				}
 			}
 		}
 	}
@@ -209,7 +215,7 @@ void World::setCurrentPosition(int16_t x, int16_t y, int16_t z)
 	mCurY = y;
 	mCurZ = z;
 
-	moveCurrentPosition(-mRange, 0, -mRange);
+	moveCurrentPosition(-mRange, -mRange, -mRange);
 }
 
 void World::updatePlayerPosition(int16_t x, int16_t y, int16_t z)
@@ -219,7 +225,7 @@ void World::updatePlayerPosition(int16_t x, int16_t y, int16_t z)
 	makeChunkCoords(x, xNew, y, yNew, z, zNew);
 
 	xNew -= (mCurX + mRange);
-	yNew -= (mCurY + 0);
+	yNew -= (mCurY + mRange);
 	zNew -= (mCurZ + mRange);
 
 	if ((xNew != 0) || (yNew != 0) || (zNew != 0)) {
