@@ -1,7 +1,13 @@
-#include "stdafx.h"
 
-#include "Chunk.h"
-#include "ChunkStorage.h"
+#include <cstdint>
+
+#include "game/types.h"
+#include "game/randomGen.h"
+#include "game/world/Chunk.h"
+#include "game/world/ChunkStorage.h"
+#include "physics/BtOgreExtras.h"
+#include "physics/BtOgreGP.h"
+#include "physics/BtOgrePG.h"
 
 #ifndef _WORLD_H_
 #define _WORLD_H_

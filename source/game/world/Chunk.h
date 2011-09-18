@@ -1,4 +1,7 @@
-#include "stdafx.h"
+
+#include <cstdint>
+
+#include "game/types.h"
 
 #ifndef _CHUNK_H_
 #define _CHUNK_H_
@@ -39,7 +42,7 @@ private:
 	// Attributes
 public:
 	static const uint16_t ChunkSizeX = 16;
-	static const uint16_t ChunkSizeY = 16;
+	static const uint16_t ChunkSizeY = 64;
 	static const uint16_t ChunkSizeZ = 16;
 
 	wCoord x, y,z;

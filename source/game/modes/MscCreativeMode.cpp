@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "MscCreativeMode.h"
 
 #include "game/input/InputHandler.h"

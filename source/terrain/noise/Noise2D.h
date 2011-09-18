@@ -1,4 +1,5 @@
-#include "stdafx.h"
+
+#include <cstdint>
 
 #ifndef _NOISE2D_H_
 #define _NOISE2D_H_

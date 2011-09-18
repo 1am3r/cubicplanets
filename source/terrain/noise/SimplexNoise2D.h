@@ -1,5 +1,7 @@
-#include "stdafx.h"
 
+#include <cstdint>
+
+#include "game/randomGen.h"
 #include "noise2d.h"
 #include "GradientNoise2D.h"
 

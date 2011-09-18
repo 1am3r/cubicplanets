@@ -1,4 +1,3 @@
-#include "stdafx.h"
 
 #ifndef __INPUTRECEIVER_H_
 #define __INPUTRECEIVER_H_

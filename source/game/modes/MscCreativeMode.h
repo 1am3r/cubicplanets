@@ -1,9 +1,10 @@
-#include "stdafx.h"
+
+#include "game/types.h"
+
+#include "MscGameMode.h"
 
 #ifndef _MSCCREATIVEMODE_H_
 #define _MSCCREATIVEMODE_H_
-
-#include "MscGameMode.h"
 
 class MscCreativeMode :
 	public MscGameMode

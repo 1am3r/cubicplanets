@@ -1,5 +1,9 @@
 #include "stdafx.h"
 
+#include "physics/BtOgreExtras.h"
+#include "physics/BtOgreGP.h"
+#include "physics/BtOgrePG.h"
+
 #include "game/world/World.h"
 #include "game/world/Chunk.h"
 #include "game/world/ChunkStorage.h"
@@ -16,7 +20,7 @@ World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 
 	mChunkStore = new ChunkStorage(*this);
 
-	mRange = 6;
+	mRange = 4;
 	mDimension = (mRange * 2 + 1);
 
 	mChunks = new Chunk*[mDimension * mDimension * mDimension];

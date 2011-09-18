@@ -15,6 +15,11 @@
 
 #include "stdafx.h"
 
+#include "physics/BtOgreExtras.h"
+#include "physics/BtOgreGP.h"
+#include "physics/BtOgrePG.h"
+
+
 using namespace Ogre;
 
 namespace BtOgre {

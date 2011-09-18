@@ -1,4 +1,3 @@
-#include "stdafx.h"
 
 #ifndef __INPUTHANDLER_H_
 #define __INPUTHANDLER_H_

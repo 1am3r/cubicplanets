@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "game/types.h"
 #include "Chunk.h"
 #include "World.h"
 
@@ -40,13 +41,13 @@ Ogre::String& Chunk::getChunkName()
 
 uint32_t Chunk::getHighestCube(uint8_t xPos, uint8_t zPos)
 {
-	for (uint8_t yPos = 127; yPos != 0; yPos--) {
+	for (uint8_t yPos = (ChunkSizeY - 1); yPos != 0; yPos--) {
 		if (blocks[xPos][zPos][yPos] != 0) {
 			return yPos;
 		}
 	}
 
-	return 127;
+	return (ChunkSizeY - 1);
 }
 
 

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "game/randomGen.h"
 #include "GradientNoise2D.h"
 
 const double GradientNoise2D::F2 = 0.366025403;	// F2 = 0.5 * (sqrt(3.0) - 1.0)

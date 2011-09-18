@@ -1,4 +1,6 @@
 #include "stdafx.h"
+
+#include "game/randomGen.h"
 #include "BillowNoise2D.h"
 
 

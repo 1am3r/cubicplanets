@@ -1,10 +1,8 @@
-#include "stdafx.h"
-
-#ifndef __MSCGAMEMODE_H_
-#define __MSCGAMEMODE_H_
 
 #include "game/input/InputReceiver.h"
 
+#ifndef __MSCGAMEMODE_H_
+#define __MSCGAMEMODE_H_
 
 class InputHandler;
 class World;

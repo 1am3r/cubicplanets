@@ -1,4 +1,3 @@
-#include "stdafx.h"
 
 #ifndef _MCSHUDGUI_H_
 #define _MCSHUDGUI_H_

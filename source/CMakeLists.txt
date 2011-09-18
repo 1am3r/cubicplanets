@@ -2,7 +2,7 @@ set(TARGET_NAME "CubicPlanets")
 
 SET( ${TARGET_NAME}_HEADER
   stdafx.h
-  game/prerequisites.h
+  game/types.h
   game/randomGen.h
   game/Msc.h
   game/gui/McsHudGui.h
@@ -12,8 +12,10 @@ SET( ${TARGET_NAME}_HEADER
   game/modes/MscCreativeMode.h
   game/modes/MscGameMode.h
   game/world/Chunk.h
+  game/world/ChunkPillar.h
   game/world/ChunkStorage.h
   game/world/World.h
+  game/world/WorldRegion.h
   physics/BtOgreExtras.h
   physics/BtOgreGP.h
   physics/BtOgrePG.h
@@ -35,8 +37,10 @@ SET( ${TARGET_NAME}_SOURCE
   game/modes/MscCreativeMode.cpp
   game/modes/MscGameMode.cpp
   game/world/Chunk.cpp
+  game/world/ChunkPillar.cpp
   game/world/ChunkStorage.cpp
   game/world/World.cpp
+  game/world/WorldRegion.cpp
   physics/BtOgre.cpp
   terrain/TerrainGenerator.cpp
   terrain/noise/Noise2D.cpp

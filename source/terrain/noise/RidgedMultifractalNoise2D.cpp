@@ -1,4 +1,6 @@
 #include "stdafx.h"
+
+#include "game/randomGen.h"
 #include "RidgedMultifractalNoise2D.h"
 #include "GradientNoise2D.h"
 

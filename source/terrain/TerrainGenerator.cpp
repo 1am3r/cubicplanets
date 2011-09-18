@@ -3,6 +3,7 @@
 
 #include "game/world/World.h"
 #include "game/world/Chunk.h"
+#include "game/world/ChunkPillar.h"
 
 #include "terrain/noise/SimplexNoise2D.h"
 #include "terrain/noise/RidgedMultifractalNoise2D.h"

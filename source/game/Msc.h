@@ -1,4 +1,5 @@
-#include "stdafx.h"
+
+#include <OGRE/Ogre.h>
 
 #ifndef __MSC_H_
 #define __MSC_H_
