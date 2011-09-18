@@ -4,6 +4,7 @@
 #include "game/types.h"
 
 #include "Chunk.h"
+#include "WorldRegion.h"
 
 #ifndef _CHUNKSTORAGE_H_
 #define _CHUNKSTORAGE_H_
@@ -16,7 +17,8 @@ class ChunkPillar;
 class ChunkStorage
 {
 public:
-	static const uint16_t ActiveChunks = 64;
+	static const uint16_t ActivePillars = 64;
+	static const uint16_t ActiveRegions = (ActivePillars / WorldRegion::ChunkPillars) + 1;
 
 	ChunkStorage(World& level);
 	~ChunkStorage();
@@ -41,21 +43,24 @@ private:
 	ChunkPillar* getPillarFromDisk(wCoord x, wCoord z);
 	void addPillarToMap(ChunkPillar* pillar, wCoord x, wCoord z);
 
+	WorldRegion& getRegion(wCoord x, wCoord z);
+
 private:
 	World& mLevel;
 	TerrainGenerator* mTerraGen;
 
 	boost::ptr_map<Point3, Chunk> mLoadedChunks;
-	ChunkPillar* mChunkMap[ActiveChunks * ActiveChunks];
+	ChunkPillar* mPillarMap[ActivePillars * ActivePillars];
+	WorldRegion* mRegionMap[ActivePillars * ActivePillars];
 
 	boost::ptr_vector<Chunk> mChunksToUnload;
 
 	uint32_t getMapCoordHash(wCoord x, wCoord z)
 	{
-		uint8_t xMap = x & (ActiveChunks - 1);
-		uint8_t zMap = z & (ActiveChunks - 1);
+		uint16_t xMap = x & (ActivePillars - 1);
+		uint16_t zMap = z & (ActivePillars - 1);
 
-		return xMap + (zMap * ActiveChunks);
+		return xMap + (zMap * ActivePillars);
 	};
 };
 

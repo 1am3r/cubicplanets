@@ -1,4 +1,7 @@
-#include <stdint.h>
+#include <cstdint>
+#include <iostream>
+#include <string>
+
 
 #ifndef _PREREQUISITES_H_
 #define _PREREQUISITES_H_

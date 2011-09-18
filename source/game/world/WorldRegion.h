@@ -1,6 +1,10 @@
 
 #include <string>
+#include <iostream>
 #include <cstdint>
+
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "game/types.h"
 
@@ -13,30 +17,40 @@ class ChunkPillar;
 class WorldRegion
 {
 public:
-	static const uint8_t ChunkPillarsX = 16;
-	static const uint8_t ChunkPillarsZ = 16;
+	static const wCoord ChunkPillars = 32;
+	static void getFileNameFromCoords(wCoord x, wCoord z, std::ostream& out)
+	{
+		out << "wr_" << boost::lexical_cast<std::string>(x) << "_" << boost::lexical_cast<std::string>(z) << ".wrc";
+	};
+
 
 public:
-	WorldRegion(World& world) : mWorld(world) {};
-	~WorldRegion();
+	WorldRegion(World& world, wCoord x, wCoord z);
+	~WorldRegion() {};
 
+	wCoord getXPos() const { return xPos; };
+	wCoord getZPos() const { return zPos; };
 
-	int32_t xPos;
-	int32_t zPos;
-
-	ChunkPillar& getChunkPillar(uint8_t x, uint8_t z);
+	ChunkPillar& getChunkPillar(wCoord x, wCoord z);
 
 	void save();
-
+	void load();
 private:
 	World& mWorld;
+	wCoord xPos;
+	wCoord zPos;
 
 	std::string mFileName;
+	boost::filesystem::path mFile;
+	bool isLoaded;
 
 private:
 	struct WorldRegionFile
 	{
+		wCoord xPos;
+		wCoord zPos;
 
+		uint32_t pillarOffset[ChunkPillars * ChunkPillars];
 	};
 };
 

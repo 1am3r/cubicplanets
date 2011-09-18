@@ -36,7 +36,7 @@ public:
 	bool checkPosition(wCoord xT, wCoord zT) { return ((x == xT) && (z == zT)); };
 	void unloadChunks()
 	{
-		for (int i = 0; i < ChunkStorage::ActiveChunks; i++) {
+		for (int i = 0; i < ChunkStorage::ActivePillars; i++) {
 			if (mChunks[i] != 0) {
 				mStorage.unloadChunk(mChunks[i]);
 				mChunks[i] = 0;
@@ -65,7 +65,7 @@ public:
 private:
 	ChunkStorage& mStorage;
 
-	uint32_t getMapCoordHash(wCoord y) { return (y & (ChunkStorage::ActiveChunks - 1)); };
+	uint32_t getMapCoordHash(wCoord y) { return (y & (ChunkStorage::ActivePillars - 1)); };
 	Chunk* loadChunk(wCoord y);
 	Chunk* getChunkFromDisk(wCoord y);
 	void addChunkToMap(Chunk* chunk, wCoord y);

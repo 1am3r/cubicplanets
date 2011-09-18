@@ -9,7 +9,7 @@
 #include <cmath>
 #include <algorithm>
 #include <functional>
-
+#include <iostream>
 
 // Boost includes
 #include <boost/random.hpp>
@@ -17,6 +17,7 @@
 #include <boost/math/special_functions/round.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 // Ogre includes

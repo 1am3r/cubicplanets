@@ -11,7 +11,8 @@
 
 World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 	: mChunks(0), mCurX(0), mCurY(0), mCurZ(0), mChunkStore(0),
-	  mWorld(0), mDebugDrawer(0), mSolver(0), mDispatcher(0), mCollisionConfig(0), mBroadphase(0)
+	  mWorld(0), mWorldDirectory(boost::filesystem::initial_path()),
+	  mDebugDrawer(0), mSolver(0), mDispatcher(0), mCollisionConfig(0), mBroadphase(0)
 {
 	mSceneMgr = sceneMgr;
 	mChunksScene = sceneMgr->getRootSceneNode()->createChildSceneNode("chunksScene");

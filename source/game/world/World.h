@@ -1,6 +1,8 @@
 
 #include <cstdint>
 
+#include <boost/filesystem.hpp>
+
 #include "game/types.h"
 #include "game/randomGen.h"
 #include "game/world/Chunk.h"
@@ -53,6 +55,10 @@ public:
 	void setCubeType(Point3& position, uint8_t cubeType);
 	void setCubeType(int32_t x, int32_t y, int32_t z, uint8_t cubeType);
 
+	boost::filesystem::path getWorldDirectory() { return mWorldDirectory; };
+
+
+	//HACK: Bullet test boxes
 	void makeBox();
 
 private:
@@ -85,6 +91,8 @@ protected:
 	Ogre::SceneNode* mChunksScene;
 
 	ChunkStorage* mChunkStore;
+
+	boost::filesystem::path mWorldDirectory;
 public:
 	// Bullet physics stuff
 	btAxisSweep3*							mBroadphase;

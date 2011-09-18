@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "game/types.h"
+#include "game/world/WorldRegion.h"
 #include "ChunkStorage.h"
 #include "ChunkPillar.h"
 #include "terrain/TerrainGenerator.h"
@@ -9,8 +10,8 @@
 ChunkStorage::ChunkStorage(World& level) :
 	mLevel(level), mTerraGen(0)
 {
-	memset(mChunkMap, 0, sizeof(mChunkMap));
-	mChunksToUnload.reserve(ActiveChunks * ActiveChunks * ActiveChunks);
+	memset(mPillarMap, 0, sizeof(mPillarMap));
+	mChunksToUnload.reserve(ActivePillars * ActivePillars * ActivePillars);
 
 	mTerraGen = new TerrainGenerator(mLevel);
 }
@@ -37,7 +38,7 @@ Chunk* ChunkStorage::getChunk(wCoord x, wCoord y, wCoord z)
 
 ChunkPillar* ChunkStorage::getPillar(wCoord x, wCoord z)
 {
-	ChunkPillar* curPillar = mChunkMap[getMapCoordHash(x, z)];
+	ChunkPillar* curPillar = mPillarMap[getMapCoordHash(x, z)];
 	if (curPillar == 0 || !curPillar->checkPosition(x, z)) {
 		curPillar = loadPillar(x, z);
 	}
@@ -66,11 +67,21 @@ void ChunkStorage::addPillarToMap(ChunkPillar* pillar, wCoord x, wCoord z)
 {
 	uint32_t coordHash = getMapCoordHash(x, z);
 
-	ChunkPillar* oldPillar = mChunkMap[coordHash];
+	ChunkPillar* oldPillar = mPillarMap[coordHash];
 	if (oldPillar != 0 && !oldPillar->checkPosition(x, z)) {
 		oldPillar->unloadChunks();
 		delete oldPillar;
 	}
 
-	mChunkMap[coordHash] = pillar;
+	mPillarMap[coordHash] = pillar;
+}
+
+
+WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
+{
+	x /= WorldRegion::ChunkPillarsX;
+	z /= WorldRegion::ChunkPillarsZ;
+	uint32_t coordHash = getMapCoordHash(x, z);
+
+
 }
