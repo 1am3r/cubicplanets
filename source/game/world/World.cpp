@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <cmath>
+
 #include "physics/BtOgreExtras.h"
 #include "physics/BtOgreGP.h"
 #include "physics/BtOgrePG.h"
@@ -21,7 +23,7 @@ World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 
 	mChunkStore = new ChunkStorage(*this);
 
-	mRange = 4;
+	mRange = 8;
 	mDimension = (mRange * 2 + 1);
 
 	mChunks = new Chunk*[mDimension * mDimension * mDimension];
@@ -90,33 +92,81 @@ World::~World(void)
 }
 
 
-void World::prepareSpawnRegion()
+void World::UpdateCachedChunks(wCoord xDiff, wCoord yDiff, wCoord zDiff)
 {
-	mCurX = 0;
-	mCurY = 0;
-	mCurZ = 0;
-
-	for (int16_t x = 0; x < mDimension; x++)
-	{
-		for (int16_t z = 0; z < mDimension; z++)
-		{
-			for (int16_t y = 0; y < mDimension; y++)
-			{
-				Chunk* newChunk = getChunk(x + mCurX, y + mCurY, z + mCurZ);
-				mChunks[(x * mDimension + z) * mDimension + y] = newChunk;
+	for (wCoord x = abs(xDiff); x > 0; x--) {
+		for (wCoord z = 0; z < mDimension; z++) {
+			for (wCoord y = 0; y < mDimension; y++) {
+				wCoord xRes = mCurX + sign(xDiff) * (mRange + x);
+				wCoord yRes = mCurY + y - mRange;
+				wCoord zRes = mCurZ + z - mRange;
+				updateCachedChunk(xRes, yRes, zRes);
 			}
 		}
 	}
 
-	for (int32_t xIt = mCurX; xIt < mCurX + mDimension; xIt++)
-	{
-		for (int32_t zIt = mCurZ; zIt < mCurZ + mDimension; zIt++)
-		{
-			for (int32_t yIt = mCurY; yIt < mCurY + mDimension; yIt++)
-			{
-				Chunk* curChunk = getChunk(xIt, yIt, zIt);
-				curChunk->activateEntity();
-				curChunk->activatePhysicsBody();
+	for (wCoord z = abs(zDiff); z > 0; z--) {
+		for (wCoord x = 0; x < mDimension; x++) {
+			for (wCoord y = 0; y < mDimension; y++) {
+				wCoord zRes = mCurZ + sign(zDiff) * (mRange + z);
+				wCoord xRes = mCurX + x - mRange;
+				wCoord yRes = mCurY + y - mRange;
+				updateCachedChunk(xRes, yRes, zRes);
+			}
+		}
+	}
+
+	for (wCoord y = abs(yDiff); y > 0; y--) {
+		for (wCoord x = 0; x < mDimension; x++) {
+			for (wCoord z = 0; z < mDimension; z++) {
+				wCoord yRes = mCurY + sign(yDiff) * (mRange + y);
+				wCoord xRes = mCurX + x - mRange;
+				wCoord zRes = mCurZ + z - mRange;
+				updateCachedChunk(xRes, yRes, zRes);
+			}
+		}
+	}
+}
+
+size_t posModulo(wCoord val, wCoord modulo)
+{
+	val %= modulo;
+	return (val < 0 ? val + modulo : val);
+}
+
+void World::updateCachedChunk(wCoord x, wCoord y, wCoord z)
+{
+	Chunk* curChunk = getCachedChunk(x, y, z);
+	if (curChunk != 0 && curChunk->isChunkActive()) {
+		curChunk->deactivateEntity();
+	}
+	curChunk = getChunk(x, y, z);
+	setCachedChunk(x, y, z, curChunk);
+	curChunk->activateEntity();
+	curChunk->activatePhysicsBody();
+}
+
+Chunk* World::getCachedChunk(wCoord x, wCoord y, wCoord z)
+{
+	return mChunks[(posModulo(x, mDimension) * mDimension + posModulo(z, mDimension)) * mDimension + posModulo(y, mDimension)];
+}
+
+void World::setCachedChunk(wCoord x, wCoord y, wCoord z, Chunk* chunk)
+{
+	mChunks[(posModulo(x, mDimension) * mDimension + posModulo(z, mDimension)) * mDimension + posModulo(y, mDimension)] = chunk;
+}
+
+void World::prepareSpawnRegion()
+{
+	mCurX = mCurY = mCurZ = 0;
+
+	for (wCoord x = -mRange; x <= mRange; x++) {
+		for (wCoord z = -mRange; z <= mRange; z++) {
+			for (wCoord y = -mRange; y <= mRange; y++) {
+				wCoord xRes = mCurX + x;
+				wCoord yRes = mCurY + y;
+				wCoord zRes = mCurZ + z;
+				updateCachedChunk(xRes, yRes, zRes);
 			}
 		}
 	}
@@ -162,56 +212,10 @@ void World::setCubeType(int32_t x, int32_t y, int32_t z, uint8_t cubeType)
 
 void World::moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff)
 {
-	uint16_t range = mRange;
-	
-	Chunk** tempArray = new Chunk*[mDimension * mDimension * mDimension];
-
-	int32_t xNew = mCurX + xDiff;
-	int32_t yNew = mCurY + yDiff;
-	int32_t zNew = mCurZ + zDiff;
-
-	for (int16_t x = 0; x < mDimension; x++)
-	{
-		for (int16_t z = 0; z < mDimension; z++)
-		{
-			for (int16_t y = 0; y < mDimension; y++)
-			{
-				if (((x + mCurX - xNew) < 0) || ((x + mCurX - xNew) >= mDimension) ||
-					((z + mCurZ - zNew) < 0) || ((z + mCurZ - zNew) >= mDimension) ||
-					((y + mCurY - yNew) < 0) || ((y + mCurY - yNew) >= mDimension))
-				{
-					Chunk* curChunk = mChunks[(x * mDimension + z) * mDimension + y];
-					if (curChunk != 0) curChunk->deactivateEntity();
-					mChunks[(x * mDimension + z) * mDimension + y] = 0;
-				}
-
-				Chunk* newChunk = getChunk(x + xNew, y + yNew, z + zNew);
-				tempArray[(x * mDimension + z) * mDimension + y] = newChunk;
-			}
-		}
-	}
-
-	memcpy(mChunks, tempArray, sizeof(Chunk*) * mDimension * mDimension * mDimension);
-	delete tempArray;
-
-	mCurX = xNew;
-	mCurY = yNew;
-	mCurZ = zNew;
-
-	for (int16_t x = 0; x < mDimension; x++)
-	{
-		for (int16_t z = 0; z < mDimension; z++)
-		{
-			for (int16_t y = 0; y < mDimension; y++)
-			{
-				Chunk* newChunk = mChunks[(x * mDimension + z) * mDimension + y];
-				if (!newChunk->isChunkActive()) {
-					newChunk->activateEntity();
-					newChunk->activatePhysicsBody();
-				}
-			}
-		}
-	}
+	UpdateCachedChunks(xDiff, yDiff, zDiff);
+	mCurX += xDiff;
+	mCurY += yDiff;
+	mCurZ += zDiff;
 }
 
 void World::setCurrentPosition(int16_t x, int16_t y, int16_t z)
@@ -229,9 +233,9 @@ void World::updatePlayerPosition(int16_t x, int16_t y, int16_t z)
 
 	makeChunkCoords(x, xNew, y, yNew, z, zNew);
 
-	xNew -= (mCurX + mRange);
-	yNew -= (mCurY + mRange);
-	zNew -= (mCurZ + mRange);
+	xNew -= mCurX;
+	yNew -= mCurY;
+	zNew -= mCurZ;
 
 	if ((xNew != 0) || (yNew != 0) || (zNew != 0)) {
 		moveCurrentPosition(xNew, yNew, zNew);

@@ -10,7 +10,9 @@
 ChunkStorage::ChunkStorage(World& level) :
 	mLevel(level), mTerraGen(0)
 {
-	memset(mPillarMap, 0, sizeof(mPillarMap));
+	std::memset(mPillarMap, 0, sizeof(mPillarMap));
+	std::memset(mRegionMap, 0, sizeof(mRegionMap));
+
 	mChunksToUnload.reserve(ActivePillars * ActivePillars * ActivePillars);
 
 	mTerraGen = new TerrainGenerator(mLevel);
@@ -38,7 +40,7 @@ Chunk* ChunkStorage::getChunk(wCoord x, wCoord y, wCoord z)
 
 ChunkPillar* ChunkStorage::getPillar(wCoord x, wCoord z)
 {
-	ChunkPillar* curPillar = mPillarMap[getMapCoordHash(x, z)];
+	ChunkPillar* curPillar = mPillarMap[getCoordHash(x, z, ActivePillars)];
 	if (curPillar == 0 || !curPillar->checkPosition(x, z)) {
 		curPillar = loadPillar(x, z);
 	}
@@ -65,7 +67,7 @@ ChunkPillar* ChunkStorage::getPillarFromDisk(wCoord x, wCoord z)
 
 void ChunkStorage::addPillarToMap(ChunkPillar* pillar, wCoord x, wCoord z)
 {
-	uint32_t coordHash = getMapCoordHash(x, z);
+	uint32_t coordHash = getCoordHash(x, z, ActivePillars);
 
 	ChunkPillar* oldPillar = mPillarMap[coordHash];
 	if (oldPillar != 0 && !oldPillar->checkPosition(x, z)) {
@@ -79,9 +81,19 @@ void ChunkStorage::addPillarToMap(ChunkPillar* pillar, wCoord x, wCoord z)
 
 WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
 {
-	x /= WorldRegion::ChunkPillarsX;
-	z /= WorldRegion::ChunkPillarsZ;
-	uint32_t coordHash = getMapCoordHash(x, z);
+	x /= WorldRegion::ChunkPillars;
+	z /= WorldRegion::ChunkPillars;
+	uint32_t coordHash = getCoordHash(x, z, WorldRegion::ChunkPillars);
 
+	WorldRegion* curRegion = mRegionMap[coordHash];
+	if (curRegion == 0 || !curRegion->checkPosition(x, z)) {
+		curRegion = loadRegion(x, z);
+	}
 
+	return *curRegion;
+}
+
+WorldRegion* ChunkStorage::loadRegion(wCoord x, wCoord z)
+{
+	return 0;
 }

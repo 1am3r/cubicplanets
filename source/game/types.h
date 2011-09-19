@@ -10,6 +10,11 @@ typedef int32_t wCoord;
 #define WCOORD_MIN INT32_MIN
 #define WCOORD_MAX INT32_MAX
 
+static inline wCoord sign(wCoord val)
+{
+	return static_cast<wCoord>((val >= 0) - (val <= 0));
+};
+
 struct Point3 {
 	int32_t x;
 	int32_t y;

@@ -18,7 +18,7 @@ class ChunkStorage
 {
 public:
 	static const uint16_t ActivePillars = 64;
-	static const uint16_t ActiveRegions = (ActivePillars / WorldRegion::ChunkPillars) + 1;
+	static const uint16_t ActiveRegions = (ActivePillars / WorldRegion::ChunkPillars) + 2;
 
 	ChunkStorage(World& level);
 	~ChunkStorage();
@@ -44,6 +44,7 @@ private:
 	void addPillarToMap(ChunkPillar* pillar, wCoord x, wCoord z);
 
 	WorldRegion& getRegion(wCoord x, wCoord z);
+	WorldRegion* loadRegion(wCoord x, wCoord z);
 
 private:
 	World& mLevel;
@@ -51,16 +52,16 @@ private:
 
 	boost::ptr_map<Point3, Chunk> mLoadedChunks;
 	ChunkPillar* mPillarMap[ActivePillars * ActivePillars];
-	WorldRegion* mRegionMap[ActivePillars * ActivePillars];
+	WorldRegion* mRegionMap[ActiveRegions * ActiveRegions];
 
 	boost::ptr_vector<Chunk> mChunksToUnload;
 
-	uint32_t getMapCoordHash(wCoord x, wCoord z)
+	uint32_t getCoordHash(wCoord x, wCoord z, uint16_t modulo)
 	{
-		uint16_t xMap = x & (ActivePillars - 1);
-		uint16_t zMap = z & (ActivePillars - 1);
+		uint16_t xMap = x & (modulo - 1);
+		uint16_t zMap = z & (modulo - 1);
 
-		return xMap + (zMap * ActivePillars);
+		return xMap + (zMap * modulo);
 	};
 };
 

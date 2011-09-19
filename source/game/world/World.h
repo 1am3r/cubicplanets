@@ -24,6 +24,7 @@ public:
 	~World();
 
 	void update(const Ogre::FrameEvent& evt);
+	void UpdateCachedChunks(wCoord xDiff, wCoord yDiff, wCoord zDiff);
 
 	void prepareSpawnRegion();
 
@@ -36,6 +37,9 @@ public:
 	void updateChunk(Chunk& curChunk);
 	void updateChunk(int32_t xPos, int32_t yPos, int32_t zPos);
 
+	Chunk* getCachedChunk(wCoord x, wCoord y, wCoord z);
+	void setCachedChunk(wCoord x, wCoord y, wCoord z, Chunk* chunk);
+	void updateCachedChunk(wCoord x, wCoord y, wCoord z);
 
 	Ogre::SceneNode&	getChunkScene()		{ return *mChunksScene; };
 	Ogre::SceneManager& getSceneMgr()		{ return *mSceneMgr; };

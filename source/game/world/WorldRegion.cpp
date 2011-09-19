@@ -10,10 +10,11 @@
 
 #include "game/types.h"
 #include "game/world/World.h"
+#include "game/world/ChunkStorage.h"
 #include "game/world/ChunkPillar.h"
 
-WorldRegion::WorldRegion(World& world, wCoord x, wCoord z) 
-	: mWorld(world), xPos(x), zPos(z), isLoaded(false)
+WorldRegion::WorldRegion(World& world, ChunkStorage& store, wCoord x, wCoord z) 
+	: mWorld(world), mStorage(store), xPos(x), zPos(z), isLoaded(false)
 {
 	std::ostringstream name;
 	getFileNameFromCoords(x, z, name);
@@ -28,7 +29,8 @@ WorldRegion::WorldRegion(World& world, wCoord x, wCoord z)
 
 ChunkPillar& WorldRegion::getChunkPillar(wCoord x, wCoord z)
 {
-
+	//TODO: do something 
+	return ChunkPillar(mStorage);
 }
 
 void WorldRegion::save()

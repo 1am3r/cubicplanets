@@ -13,6 +13,7 @@
 
 class World;
 class ChunkPillar;
+class ChunkStorage;
 
 class WorldRegion
 {
@@ -25,11 +26,12 @@ public:
 
 
 public:
-	WorldRegion(World& world, wCoord x, wCoord z);
+	WorldRegion(World& world, ChunkStorage& store, wCoord x, wCoord z);
 	~WorldRegion() {};
 
 	wCoord getXPos() const { return xPos; };
 	wCoord getZPos() const { return zPos; };
+	bool checkPosition(wCoord x, wCoord z) { return (x == xPos && z == zPos); };
 
 	ChunkPillar& getChunkPillar(wCoord x, wCoord z);
 
@@ -37,6 +39,7 @@ public:
 	void load();
 private:
 	World& mWorld;
+	ChunkStorage& mStorage;
 	wCoord xPos;
 	wCoord zPos;
 
