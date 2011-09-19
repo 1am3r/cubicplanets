@@ -26,16 +26,16 @@ public:
 	void update(const Ogre::FrameEvent& evt);
 	void UpdateCachedChunks(wCoord xDiff, wCoord yDiff, wCoord zDiff);
 
-	void prepareSpawnRegion();
+	void World::prepareRegion(wCoord x, wCoord y, wCoord z);
 
 	Chunk* getChunk(wCoord xPos, wCoord yPos, wCoord zPos) { return mChunkStore->getChunk(xPos, yPos, zPos); };
-	Chunk* loadChunk(int32_t xPos, int32_t yPos, int32_t zPos);
+	Chunk* loadChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 	void activateChunk(Chunk& curChunk);
-	void activateChunk(int32_t xPos, int32_t yPos, int32_t zPos);
+	void activateChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 	void deactivateChunk(Chunk& curChunk);
-	void deactivateChunk(int32_t xPos, int32_t yPos, int32_t zPos);
+	void deactivateChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 	void updateChunk(Chunk& curChunk);
-	void updateChunk(int32_t xPos, int32_t yPos, int32_t zPos);
+	void updateChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 
 	Chunk* getCachedChunk(wCoord x, wCoord y, wCoord z);
 	void setCachedChunk(wCoord x, wCoord y, wCoord z, Chunk* chunk);
@@ -45,19 +45,19 @@ public:
 	Ogre::SceneManager& getSceneMgr()		{ return *mSceneMgr; };
 	btDynamicsWorld&	getPhysicsWorld()	{ return *mWorld; };
 
-	void getCurrentPosition(int32_t& xPos, int32_t& yPos, int32_t& zPos)
+	void getCurrentPosition(wCoord& xPos, wCoord& yPos, wCoord& zPos)
 	{
 		xPos = mCurX;
 		yPos = mCurY;
 		zPos = mCurZ;
 	};
-	uint16_t getDimension() { return mDimension; };
-	void moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff);
-	void setCurrentPosition(int16_t x, int16_t y, int16_t z);
-	void updatePlayerPosition(int16_t x, int16_t y, int16_t z);
+	wCoord getDimension() { return mDimension; };
+	void moveCurrentPosition(wCoord xDiff, wCoord yDiff, wCoord zDiff);
+	void setCurrentPosition(wCoord x, wCoord y, wCoord z);
+	void updatePlayerPosition(wCoord x, wCoord y, wCoord z);
 
 	void setCubeType(Point3& position, uint8_t cubeType);
-	void setCubeType(int32_t x, int32_t y, int32_t z, uint8_t cubeType);
+	void setCubeType(wCoord x, wCoord y, wCoord z, uint8_t cubeType);
 
 	boost::filesystem::path getWorldDirectory() { return mWorldDirectory; };
 
@@ -66,13 +66,13 @@ public:
 	void makeBox();
 
 private:
-	void makeCubeCoords(int32_t x, uint8_t& xLocal, int32_t y, uint8_t& yLocal, int32_t z, uint8_t& zLocal)
+	void makeCubeCoords(wCoord x, uint8_t& xLocal, wCoord y, uint8_t& yLocal, wCoord z, uint8_t& zLocal)
 	{
 		xLocal = x & (Chunk::ChunkSizeX - 1);
 		yLocal = y & (Chunk::ChunkSizeY - 1);
 		zLocal = z & (Chunk::ChunkSizeZ - 1);
 	};
-	void makeChunkCoords(int32_t x, int32_t& xChunk, int32_t y, int32_t& yChunk, int32_t z, int32_t& zChunk)
+	void makeChunkCoords(wCoord x, wCoord& xChunk, wCoord y, wCoord& yChunk, wCoord z, wCoord& zChunk)
 	{
 		xChunk = ((x < 0) ? (x - (Chunk::ChunkSizeX - 1)) : x) / Chunk::ChunkSizeX;
 		yChunk = ((y < 0) ? (y - (Chunk::ChunkSizeY - 1)) : y) / Chunk::ChunkSizeY;
@@ -83,11 +83,11 @@ private:
 	void deregisterChunkBody(Chunk& curChunk);
 
 protected:
-	uint16_t mRange;
-	uint16_t mDimension;
-	int32_t mCurX;
-	int32_t mCurY;
-	int32_t mCurZ;
+	wCoord mRange;
+	wCoord mDimension;
+	wCoord mCurX;
+	wCoord mCurY;
+	wCoord mCurZ;
 
 	Chunk** mChunks;
 

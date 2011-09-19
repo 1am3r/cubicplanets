@@ -10,35 +10,6 @@ class World;
 
 class Chunk
 {
-private:
-	// position: 3 floats, normal: 3 floats, texture: 2 floats
-	static const uint8_t VertexSize = 3 + 3 + 2;
-	// default vertices count per chunk
-	static const uint32_t DefaultFaces = 4096;
-
-	enum BlockFace
-	{
-		LEFT = 0,
-		RIGHT = 1,
-		BACK = 2,
-		FRONT = 3,
-		BOTTOM = 4,
-		TOP = 5
-	};
-
-	struct CubeFace
-	{
-		const uint8_t x;
-		const uint8_t y;
-		const uint8_t z;
-		const uint8_t type;
-		const BlockFace face;
-
-		CubeFace(uint8_t xPos, uint8_t yPos, uint8_t zPos, BlockFace cubeFace, uint8_t cubeType)
-		: x(xPos), y(yPos), z(zPos), face(cubeFace), type(cubeType)
-		{ };
-	};
-
 	// Attributes
 public:
 	static const uint16_t ChunkSizeX = 16;
@@ -100,6 +71,35 @@ public:
 	// bullet body handling
 	void activatePhysicsBody();
 	void deactivatePhysicsBody();
+
+private:
+	// position: 3 floats, normal: 3 floats, texture: 2 floats
+	static const uint8_t VertexSize = 3 + 3 + 2;
+	// default vertices count per chunk
+	static const uint32_t DefaultFaces = 4096;
+
+	enum BlockFace
+	{
+		LEFT = 0,
+		RIGHT = 1,
+		BACK = 2,
+		FRONT = 3,
+		BOTTOM = 4,
+		TOP = 5
+	};
+
+	struct CubeFace
+	{
+		const uint8_t x;
+		const uint8_t y;
+		const uint8_t z;
+		const uint8_t type;
+		const BlockFace face;
+
+		CubeFace(uint8_t xPos, uint8_t yPos, uint8_t zPos, BlockFace cubeFace, uint8_t cubeType)
+		: x(xPos), y(yPos), z(zPos), face(cubeFace), type(cubeType)
+		{ };
+	};
 
 private:
 	// init / destroy ogre entity

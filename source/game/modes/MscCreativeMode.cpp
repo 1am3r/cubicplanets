@@ -63,7 +63,7 @@ void MscCreativeMode::init()
 void MscCreativeMode::start()
 {
 	mLevel = new World(23L, mSceneMgr);
-	mLevel->prepareSpawnRegion();
+	mLevel->prepareRegion(0, 0, 0);
 
 	Chunk* startChunk = mLevel->getChunk(0, 0, 0);
 	if (!startChunk){
@@ -71,7 +71,7 @@ void MscCreativeMode::start()
 	}
 
 	Ogre::Real startPos = static_cast<Ogre::Real> (startChunk->getHighestCube(0, 0));
-	startPos += 10.5;
+	startPos += 2.0;
 
 	mCamNode->setPosition(Ogre::Real(0.5), startPos, Ogre::Real(0.5));
 	mCamNode->setOrientation(Ogre::Quaternion::IDENTITY);

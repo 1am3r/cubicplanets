@@ -128,12 +128,6 @@ void World::UpdateCachedChunks(wCoord xDiff, wCoord yDiff, wCoord zDiff)
 	}
 }
 
-size_t posModulo(wCoord val, wCoord modulo)
-{
-	val %= modulo;
-	return (val < 0 ? val + modulo : val);
-}
-
 void World::updateCachedChunk(wCoord x, wCoord y, wCoord z)
 {
 	Chunk* curChunk = getCachedChunk(x, y, z);
@@ -148,17 +142,17 @@ void World::updateCachedChunk(wCoord x, wCoord y, wCoord z)
 
 Chunk* World::getCachedChunk(wCoord x, wCoord y, wCoord z)
 {
-	return mChunks[(posModulo(x, mDimension) * mDimension + posModulo(z, mDimension)) * mDimension + posModulo(y, mDimension)];
+	return mChunks[(positiveMod(x, mDimension) * mDimension + positiveMod(z, mDimension)) * mDimension + positiveMod(y, mDimension)];
 }
 
 void World::setCachedChunk(wCoord x, wCoord y, wCoord z, Chunk* chunk)
 {
-	mChunks[(posModulo(x, mDimension) * mDimension + posModulo(z, mDimension)) * mDimension + posModulo(y, mDimension)] = chunk;
+	mChunks[(positiveMod(x, mDimension) * mDimension + positiveMod(z, mDimension)) * mDimension + positiveMod(y, mDimension)] = chunk;
 }
 
-void World::prepareSpawnRegion()
+void World::prepareRegion(wCoord x, wCoord y, wCoord z)
 {
-	mCurX = mCurY = mCurZ = 0;
+	mCurX = x; mCurY = y; mCurZ = z;
 
 	for (wCoord x = -mRange; x <= mRange; x++) {
 		for (wCoord z = -mRange; z <= mRange; z++) {
@@ -179,7 +173,7 @@ void World::updateChunk(Chunk& curChunk)
 	curChunk.update();
 }
 
-void World::updateChunk(int32_t xPos, int32_t yPos, int32_t zPos)
+void World::updateChunk(wCoord xPos, wCoord yPos, wCoord zPos)
 {
 	updateChunk(*getChunk(xPos, yPos, zPos));
 }
@@ -190,12 +184,12 @@ void World::setCubeType(Point3& position, uint8_t cubeType)
 	setCubeType(position.x, position.y, position.z, cubeType);
 }
 
-void World::setCubeType(int32_t x, int32_t y, int32_t z, uint8_t cubeType)
+void World::setCubeType(wCoord x, wCoord y, wCoord z, uint8_t cubeType)
 {
 	uint8_t xCube, yCube, zCube;
 	makeCubeCoords(x, xCube, y, yCube, z, zCube);
 
-	int32_t xChunk, yChunk, zChunk;
+	wCoord xChunk, yChunk, zChunk;
 	makeChunkCoords(x, xChunk, y, yChunk, z, zChunk);
 
 	Chunk * curChunk = getChunk(xChunk, yChunk, zChunk);
@@ -210,7 +204,7 @@ void World::setCubeType(int32_t x, int32_t y, int32_t z, uint8_t cubeType)
 }
 
 
-void World::moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff)
+void World::moveCurrentPosition(wCoord xDiff, wCoord yDiff, wCoord zDiff)
 {
 	UpdateCachedChunks(xDiff, yDiff, zDiff);
 	mCurX += xDiff;
@@ -218,18 +212,14 @@ void World::moveCurrentPosition(int16_t xDiff, int16_t yDiff, int16_t zDiff)
 	mCurZ += zDiff;
 }
 
-void World::setCurrentPosition(int16_t x, int16_t y, int16_t z)
+void World::setCurrentPosition(wCoord x, wCoord y, wCoord z)
 {
-	mCurX = x;
-	mCurY = y;
-	mCurZ = z;
-
-	moveCurrentPosition(-mRange, -mRange, -mRange);
+	prepareRegion(x, y, z);
 }
 
-void World::updatePlayerPosition(int16_t x, int16_t y, int16_t z)
+void World::updatePlayerPosition(wCoord x, wCoord y, wCoord z)
 {
-	int32_t xNew, yNew, zNew;
+	wCoord xNew, yNew, zNew;
 
 	makeChunkCoords(x, xNew, y, yNew, z, zNew);
 
@@ -245,7 +235,6 @@ void World::updatePlayerPosition(int16_t x, int16_t y, int16_t z)
 void World::update(const Ogre::FrameEvent& evt)
 {
 	mWorld->stepSimulation(evt.timeSinceLastFrame);
-	mChunkStore->update(evt);
 }
 
 btBoxShape *sceneBoxShape = 0;

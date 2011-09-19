@@ -11,64 +11,41 @@
 class ChunkPillar
 {
 public:
+	static const wCoord ChunksInPillar = 128;
+
+	static ChunkPillar* loadFromStream(WorldRegion& region, wCoord x, wCoord z);
+
+public:
 	wCoord x, z;
 
 	wCoord maxY, minY;
 	bool heightMapSet;
 
 	wCoord heightMap[Chunk::ChunkSizeX][Chunk::ChunkSizeZ];
-	Chunk* mChunks[128];
+	Chunk* mChunks[ChunksInPillar];
 
 public:
-	ChunkPillar(ChunkStorage& store) :
-	  mStorage(store), heightMapSet(false)
-	{
-		memset(mChunks, 0, sizeof(mChunks));
-	};
-	ChunkPillar(ChunkStorage& store, wCoord xPos, wCoord zPos) :
-	  mStorage(store), x(xPos), z(zPos), heightMapSet(false)
-	{
-		memset(heightMap, 0, sizeof(heightMap));
-		memset(mChunks, 0, sizeof(mChunks));
-	};
-	~ChunkPillar() {};
+	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos);
+	~ChunkPillar() { unloadChunks(); };
 
-	bool checkPosition(wCoord xT, wCoord zT) { return ((x == xT) && (z == zT)); };
-	void unloadChunks()
-	{
-		for (int i = 0; i < ChunkStorage::ActivePillars; i++) {
-			if (mChunks[i] != 0) {
-				mStorage.unloadChunk(mChunks[i]);
-				mChunks[i] = 0;
-			}
-		}
-	};
-	void addChunk(Chunk* newChunk)
-	{
-		uint32_t hash = getMapCoordHash(newChunk->y);
-
-		if (mChunks[hash] != 0) {
-			mStorage.unloadChunk(mChunks[hash]);
-		}
-		mChunks[hash] = newChunk;
-	};
-	Chunk* getChunk(wCoord y)
-	{
-		Chunk* curChunk = mChunks[getMapCoordHash(y)];
-		if (curChunk == 0 || !curChunk->checkPosition(x, y, z)) {
-			curChunk = loadChunk(y);
-		}
-
-		return curChunk;
-	};
+	void unloadChunks();
+	Chunk* getChunk(wCoord y);
 
 private:
-	ChunkStorage& mStorage;
+	static size_t getChunkIndex(wCoord y) { return positiveMod(y, ChunksInPillar); };
+	
 
-	uint32_t getMapCoordHash(wCoord y) { return (y & (ChunkStorage::ActivePillars - 1)); };
-	Chunk* loadChunk(wCoord y);
-	Chunk* getChunkFromDisk(wCoord y);
-	void addChunkToMap(Chunk* chunk, wCoord y);
+	WorldRegion& mWRegion;
+	
+	Chunk* getChunkFromStream(wCoord y);
+
+	struct ChunkPillarFile {
+		// uint8_t here, as it is a relative position in the WorldRegion, so no need for wCoord
+		uint8_t xPos;
+		uint8_t zPos;
+
+		uint32_t chunkOffsets[ChunksInPillar];
+	};
 };
 
 #endif // _CHUNKPILLAR_H_

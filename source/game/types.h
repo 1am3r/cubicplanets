@@ -15,6 +15,12 @@ static inline wCoord sign(wCoord val)
 	return static_cast<wCoord>((val >= 0) - (val <= 0));
 };
 
+static inline size_t positiveMod(wCoord val, wCoord mod)
+{
+	val %= mod;
+	return (val < 0 ? val + mod : val);
+}
+
 struct Point3 {
 	int32_t x;
 	int32_t y;
