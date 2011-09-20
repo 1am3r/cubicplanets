@@ -65,6 +65,8 @@ endif(MSVC)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+add_definitions(${PNG_DEFINITIONS})
+
 #Specify required files for target executable
 add_executable(${TARGET_NAME}
   ${EXE_PREFIX}
@@ -85,6 +87,8 @@ target_link_libraries(${TARGET_NAME}
   ${OGREOGGSOUND_LIBRARIES}
   ${BULLET_LIBRARIES}
   ${CEGUI_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${PNG_LIBRARIES}
 )
 
 
