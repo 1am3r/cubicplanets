@@ -22,6 +22,9 @@ ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::is
 	: mWRegion(wRegion), x(xPos), z(zPos), heightMapSet(false), mModified(false)
 {
 	mChunks.fill(static_cast<Chunk*>(0));
+	for (auto xIt = heightMap.begin(); xIt != heightMap.end(); ++xIt) {
+		data.read(reinterpret_cast<char*>((*xIt).data()), (*xIt).size() * sizeof(heightMap[0][0]));
+	}
 }
 
 
