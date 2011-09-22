@@ -69,9 +69,12 @@ private:
 	std::array<uint32_t, PillarsPerRegion> mPillarOffsets;
 	std::vector<bool> mFreeChunkSectors;
 	std::map<uint32_t, uint32_t> mChunkOffsets;
-	
+	uint8_t mChunkFileHeaderSectors;
+
 	void createRegionFile();
 	void loadRegionFile();
+	void createChunksFile();
+	void loadChunksFile();
 	void saveToStream(std::ostream& regionData, std::ostream& chunkData);
 
 	ChunkPillar* createChunkPillar(wCoord x, wCoord z);

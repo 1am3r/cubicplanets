@@ -41,19 +41,40 @@ WorldRegion::WorldRegion(World& world, ChunkStorage& store, wCoord x, wCoord z)
 	if (bfs::exists(regionFilePath)) {
 		mRegionFileSize = static_cast<uint32_t>(bfs::file_size(regionFilePath));
 		mRegionFile.open(regionFilePath, std::ios::binary | std::ios::out | std::ios::in);
-		mChunkFileSize = static_cast<uint32_t>(bfs::file_size(chunkFilePath));
-		mChunkFile.open(chunkFilePath, std::ios::binary | std::ios::out | std::ios::in);
 	} else {
 		mRegionFileSize = 0;
 		mRegionFile.open(regionFilePath, std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
+	}
+	
+	if (bfs::exists(chunkFilePath)) {
+		mChunkFileSize = static_cast<uint32_t>(bfs::file_size(chunkFilePath));
+		mChunkFile.open(chunkFilePath, std::ios::binary | std::ios::out | std::ios::in);
+	} else {
 		mChunkFileSize = 0;
 		mChunkFile.open(chunkFilePath, std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
 	}
-	
-	if (mRegionFileSize <  sizeof(mPillarOffsets)) {
+
+	if (mRegionFileSize <  RegionFileSectorSize) {
 		createRegionFile();
+		createChunksFile();
 	} else {
+		// Load the regions file
 		loadRegionFile();
+
+		// Test if there is even a gzip header
+		if (mChunkFileSize < 16) {
+			createChunksFile();
+		} else {
+			// Try loading the chunks file
+			try {
+				loadChunksFile();
+			}
+			catch (bio::gzip_error& e)
+			{
+				std::cout << "WorldRegion::loadChunksFile: gzip exception: " << e.what() << std::endl;
+				createChunksFile();
+			}
+		}
 	}
 };
 
@@ -70,6 +91,7 @@ WorldRegion::~WorldRegion()
 
 void WorldRegion::createRegionFile()
 {
+	mFreeRegionSectors.clear();
 	mFreeRegionSectors.resize(PillarsPerRegion + 1, true);
 	mPillarOffsets.fill(0);
 
@@ -95,8 +117,37 @@ void WorldRegion::loadRegionFile()
 			mFreeRegionSectors[index] = false;
 		}
 	}
+}
 
-	//TODO: the same for the chunk file
+void WorldRegion::createChunksFile()
+{
+	mFreeChunkSectors.clear();
+	mFreeChunkSectors.resize(ChunksPerRegion + 16, true);
+	mChunkOffsets.clear();
+	mChunkFile.seekp(0);
+
+	bio::gzip_compressor gzComp;
+	bio::filtering_ostream gzOut;
+	gzOut.push(gzComp);
+	gzOut.push(mChunkFile);
+
+	uint32_t zero = 0;
+	for (uint32_t i = 0; i < ChunksPerRegion; ++i) {
+		gzOut.write(reinterpret_cast<char*>(&zero), sizeof(zero));
+	}
+	gzOut.pop();
+
+	// Mark header sectors as used
+	uint32_t headerSize = static_cast<uint32_t>(mChunkFile.tellp());
+	mChunkFileHeaderSectors = (headerSize / ChunkFileSectorSize) + 1;
+	for (uint8_t i = 0; i < mChunkFileHeaderSectors; ++i) {
+		mFreeChunkSectors[i] = false;
+	}
+	mChunkFile.sync();
+}
+
+void WorldRegion::loadChunksFile()
+{
 	uint32_t chunkSectors = getChunkSectorCount();
 	mFreeChunkSectors.clear();
 	mFreeChunkSectors.resize(chunkSectors, true);
@@ -106,8 +157,28 @@ void WorldRegion::loadRegionFile()
 	bio::filtering_istream gzIn;
 	gzIn.push(gzDecomp);
 	gzIn.push(mChunkFile);
-	for (uint32_t i = 0; i < 0; ++i) {
-
+	for (uint32_t i = 0; i < ChunksPerRegion; ++i) {
+		uint32_t offset;
+		gzIn.read(reinterpret_cast<char*>(&offset), sizeof(offset));
+		if (offset != 0) {
+			// Insert offset in map
+			mChunkOffsets[i] = offset;
+			
+			// Mark sectors as used
+			uint32_t sector = getSectorFromOffset(offset);
+			uint8_t numSectors = getSectorSizeFromOffset(offset); 
+			for (uint8_t i = sector; i < sector + numSectors; ++i) {
+				mFreeChunkSectors[i] = false;
+			}
+		}
+	}
+	gzIn.pop();
+	
+	// Mark header sectors as used
+	uint32_t headerSize = static_cast<uint32_t>(mChunkFile.tellg());
+	mChunkFileHeaderSectors = (headerSize / ChunkFileSectorSize) + 1;
+	for (uint8_t i = 0; i < mChunkFileHeaderSectors; ++i) {
+		mFreeChunkSectors[i] = false;
 	}
 }
 
@@ -255,15 +326,23 @@ ChunkPillar* WorldRegion::loadChunkPillar(wCoord x, wCoord z)
 		// Pillar is not generated yet
 		return 0;
 	} else {
-		// Pillar is saved, load it
-		uint32_t sector = getSectorFromOffset(offset);
-		uint8_t sectorSize = getSectorSizeFromOffset(offset);
-		bio::gzip_decompressor gzDecomp;
-		bio::filtering_istream gzIn;
-		gzIn.push(gzDecomp);
-		mRegionFile.seekg(sector * RegionFileSectorSize);
-		gzIn.push(mRegionFile);
-		return new ChunkPillar(*this, x, z, gzIn);
+		try {
+			// Pillar is saved, load it
+			uint32_t sector = getSectorFromOffset(offset);
+			uint8_t sectorSize = getSectorSizeFromOffset(offset);
+			bio::gzip_decompressor gzDecomp;
+			bio::filtering_istream gzIn;
+			gzIn.push(gzDecomp);
+			mRegionFile.seekg(sector * RegionFileSectorSize);
+			gzIn.push(mRegionFile);
+			return new ChunkPillar(*this, x, z, gzIn);
+		}
+		catch (bio::gzip_error& e)
+		{
+			// Something was wrong with this pillar, ignore it
+			std::cout << "WorldRegion::loadChunkPillar: gzip exception: " << e.what() << std::endl;
+			return 0;
+		}
 	}
 
 }
