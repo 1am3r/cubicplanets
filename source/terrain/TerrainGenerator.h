@@ -17,11 +17,12 @@ public:
 	TerrainGenerator(World& world);
 	~TerrainGenerator();
 
-	Chunk* generateChunk(ChunkPillar* pillar, wCoord xPos, wCoord yPos, wCoord zPos);
+	void setHeightMap(ChunkPillar& pillar, wCoord xPos, wCoord zPos);
+	Chunk* generateChunk(ChunkPillar& pillar, wCoord xPos, wCoord yPos, wCoord zPos);
 
 private:
-	void generateHeightMap(ChunkPillar* pillar, wCoord xPos, wCoord zPos);
-	Chunk* fillChunk(ChunkPillar* pillar, wCoord yPos);
+	void generateHeightMap(ChunkPillar& pillar, wCoord xPos, wCoord zPos);
+	Chunk* fillChunk(ChunkPillar& pillar, wCoord yPos);
 
 private:
 	World& mWorld;

@@ -35,11 +35,17 @@ TerrainGenerator::~TerrainGenerator()
 	}
 }
 
-
-Chunk* TerrainGenerator::generateChunk(ChunkPillar* pillar, wCoord xPos, wCoord yPos, wCoord zPos)
+void TerrainGenerator::setHeightMap(ChunkPillar& pillar, wCoord xPos, wCoord zPos)
 {
-	if (!pillar->heightMapSet) {
+	if (!pillar.heightMapSet) {
 		generateHeightMap(pillar, xPos, zPos);
+	}
+}
+
+Chunk* TerrainGenerator::generateChunk(ChunkPillar& pillar, wCoord xPos, wCoord yPos, wCoord zPos)
+{
+	if (!pillar.heightMapSet) {
+		setHeightMap(pillar, xPos, zPos);
 	}
 
 	Chunk* newChunk = fillChunk(pillar, yPos);
@@ -47,7 +53,7 @@ Chunk* TerrainGenerator::generateChunk(ChunkPillar* pillar, wCoord xPos, wCoord 
 	return newChunk;
 }
 
-void TerrainGenerator::generateHeightMap(ChunkPillar* pillar, wCoord xPos, wCoord zPos)
+void TerrainGenerator::generateHeightMap(ChunkPillar& pillar, wCoord xPos, wCoord zPos)
 {
 	//const uint16_t scale = (Chunk::ChunkSizeY * 6) / 13;
 	const uint16_t scale = 128;
@@ -94,33 +100,33 @@ void TerrainGenerator::generateHeightMap(ChunkPillar* pillar, wCoord xPos, wCoor
 			if (height > maxY) maxY = height;
 			if (height < minY) minY = height;
 
-			pillar->heightMap[xi][zi] = height;
+			pillar.heightMap[xi][zi] = height;
 		}
 	}
 
-	pillar->maxY = maxY;
-	pillar->minY = minY;
-	pillar->heightMapSet = true;
+	pillar.maxY = maxY;
+	pillar.minY = minY;
+	pillar.heightMapSet = true;
 }
 
-Chunk* TerrainGenerator::fillChunk(ChunkPillar* pillar, wCoord yPos)
+Chunk* TerrainGenerator::fillChunk(ChunkPillar& pillar, wCoord yPos)
 {
-	Chunk* newChunk = new Chunk(mWorld, pillar->x, yPos, pillar->z);
+	Chunk* newChunk = new Chunk(mWorld, pillar.x, yPos, pillar.z);
 	uint16_t heighestCube = 0;
 
-	if (pillar->maxY < yPos * Chunk::ChunkSizeY) {
+	if (pillar.maxY < yPos * Chunk::ChunkSizeY) {
 		memset(newChunk->blocks, 0, sizeof(newChunk->blocks));
-	} else if (pillar->minY >= (yPos + 1) * Chunk::ChunkSizeY) {
+	} else if (pillar.minY >= (yPos + 1) * Chunk::ChunkSizeY) {
 		heighestCube = Chunk::ChunkSizeY - 1;
 		memset(newChunk->blocks, 3, sizeof(newChunk->blocks));
 	} else {
-		heighestCube = pillar->maxY - (yPos * Chunk::ChunkSizeY);
+		heighestCube = pillar.maxY - (yPos * Chunk::ChunkSizeY);
 		if (heighestCube < 0) heighestCube = 0;
 		if (heighestCube >= Chunk::ChunkSizeY) heighestCube = Chunk::ChunkSizeY - 1;
 
 		for (int xi = 0; xi < Chunk::ChunkSizeX; xi++) {
 			for (int zi = 0; zi < Chunk::ChunkSizeZ; zi++) {
-				wCoord height = pillar->heightMap[xi][zi];
+				wCoord height = pillar.heightMap[xi][zi];
 				height -= yPos * Chunk::ChunkSizeY;
 
 				if (height > 0) {

@@ -1,5 +1,6 @@
-
 #include <cstdint>
+#include <iostream>
+#include <array>
 
 #include "game/types.h"
 #include "Chunk.h"
@@ -11,41 +12,35 @@
 class ChunkPillar
 {
 public:
-	static const wCoord ChunksInPillar = 128;
-
-	static ChunkPillar* loadFromStream(WorldRegion& region, wCoord x, wCoord z);
-
+	static const wCoord ChunksInPillar = 64;
+	
 public:
 	wCoord x, z;
 
 	wCoord maxY, minY;
 	bool heightMapSet;
 
-	wCoord heightMap[Chunk::ChunkSizeX][Chunk::ChunkSizeZ];
-	Chunk* mChunks[ChunksInPillar];
+	std::array<std::array<wCoord, Chunk::ChunkSizeZ>, Chunk::ChunkSizeX> heightMap;
+	std::array<Chunk*, ChunksInPillar> mChunks;
 
 public:
 	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos);
+	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::istream& data);
 	~ChunkPillar() { unloadChunks(); };
+
+	void saveToStream(std::ostream& pillarData, std::ostream& chunkData);
 
 	void unloadChunks();
 	Chunk* getChunk(wCoord y);
 
+	bool isModified() { return mModified; };
+
 private:
 	static size_t getChunkIndex(wCoord y) { return positiveMod(y, ChunksInPillar); };
 	
-
+private:
 	WorldRegion& mWRegion;
-	
-	Chunk* getChunkFromStream(wCoord y);
-
-	struct ChunkPillarFile {
-		// uint8_t here, as it is a relative position in the WorldRegion, so no need for wCoord
-		uint8_t xPos;
-		uint8_t zPos;
-
-		uint32_t chunkOffsets[ChunksInPillar];
-	};
+	bool mModified;
 };
 
 #endif // _CHUNKPILLAR_H_

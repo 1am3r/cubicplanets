@@ -44,9 +44,6 @@ WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
 		if (curRegion != 0) {
 			delete curRegion;
 		}
-		curRegion = WorldRegion::loadFromDisk(mLevel, *this, x, z);
-	}
-	if (curRegion == 0) {
 		curRegion = new WorldRegion(mLevel, *this, x, z);
 		mRegionMap[index] = curRegion;
 	}

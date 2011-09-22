@@ -1,25 +1,32 @@
 #include "stdafx.h"
 
+#include <iostream>
+
 #include "game/types.h"
-#include "ChunkPillar.h"
+#include "game/world/ChunkPillar.h"
+#include "game/world/WorldRegion.h"
 #include "terrain/TerrainGenerator.h"
 
-
-ChunkPillar* ChunkPillar::loadFromStream(WorldRegion& region, wCoord x, wCoord z)
-{
-	return 0;
-}
-
-
 ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos)
-	: mWRegion(wRegion), x(xPos), z(zPos), heightMapSet(false)
+	: mWRegion(wRegion), x(xPos), z(zPos), heightMapSet(false), mModified(true)
 {
-	std::fill(mChunks, mChunks + ChunksInPillar, static_cast<Chunk*>(0));
+	mChunks.fill(static_cast<Chunk*>(0));
+	mWRegion.getTerraGen().setHeightMap(*this, x, z);
 }
 
-Chunk* ChunkPillar::getChunkFromStream(wCoord y)
+ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::istream& data)
+	: mWRegion(wRegion), x(xPos), z(zPos), heightMapSet(false), mModified(false)
 {
-	return 0;
+	mChunks.fill(static_cast<Chunk*>(0));
+}
+
+
+void ChunkPillar::saveToStream(std::ostream& pillarData, std::ostream& chunkData)
+{
+	// Save the heightmap
+	for (auto xIt = heightMap.begin(); xIt != heightMap.end(); ++xIt) {
+		pillarData.write(reinterpret_cast<char*>((*xIt).data()), (*xIt).size() * sizeof(heightMap[0][0]));
+	}
 }
 
 void ChunkPillar::unloadChunks()
@@ -37,9 +44,10 @@ Chunk* ChunkPillar::getChunk(wCoord y)
 	size_t index = getChunkIndex(y);
 	Chunk* curChunk = mChunks[index];
 	if (curChunk == 0) {
-		curChunk = getChunkFromStream(y);
+		//TODO: load chunk if saved
+		//curChunk = loadChunk();
 		if (curChunk == 0) {
-			curChunk = mWRegion.getTerraGen().generateChunk(this, x, y, z);
+			curChunk = mWRegion.getTerraGen().generateChunk(*this, x, y, z);
 		}
 		mChunks[index] = curChunk;
 	}	

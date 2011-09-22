@@ -12,9 +12,9 @@ class Chunk
 {
 	// Attributes
 public:
-	static const uint16_t ChunkSizeX = 16;
-	static const uint16_t ChunkSizeY = 64;
-	static const uint16_t ChunkSizeZ = 16;
+	static const uint8_t ChunkSizeX = 16;
+	static const uint8_t ChunkSizeY = 128;
+	static const uint8_t ChunkSizeZ = 16;
 
 	wCoord x, y,z;
 
@@ -58,9 +58,7 @@ public:
 	bool isChunkActive() { return mSceneAttached; };
 
 	void setModified() { mIsModified = true; };
-
-	bool checkPosition(wCoord xT, wCoord yT, wCoord zT) { return ((xT == x) && (yT == y) && (zT == z)); };
-
+	
 	// update after block modification
 	void update();
 

@@ -2,6 +2,7 @@ set(TARGET_NAME "CubicPlanets")
 
 SET( ${TARGET_NAME}_HEADER
   stdafx.h
+  boost/gzip.hpp
   game/types.h
   game/randomGen.h
   game/Msc.h
@@ -29,6 +30,8 @@ SET( ${TARGET_NAME}_HEADER
 
 SET( ${TARGET_NAME}_SOURCE
   stdafx.cpp
+  boost/zlib.cpp
+  boost/gzip.cpp
   game/Msc.cpp
   game/gui/McsHudGui.cpp
   game/gui/MscMainMenu.cpp
@@ -59,12 +62,14 @@ ENDIF(MSVC)
 
 if(MSVC)
   set(EXE_PREFIX "WIN32")
+  add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 else ()
   set(EXE_PREFIX "")
 endif(MSVC)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+# Add PNG Definitions
 add_definitions(${PNG_DEFINITIONS})
 
 #Specify required files for target executable
@@ -81,14 +86,14 @@ endif(MSVC)
 
 #Link required libraies
 target_link_libraries(${TARGET_NAME}
+  ${ZLIB_LIBRARIES}
+  ${PNG_LIBRARIES}
   ${OGRE_LIBRARIES}
   ${OIS_LIBRARIES}
   ${Boost_LIBRARIES}
   ${OGREOGGSOUND_LIBRARIES}
   ${BULLET_LIBRARIES}
   ${CEGUI_LIBRARIES}
-  ${ZLIB_LIBRARIES}
-  ${PNG_LIBRARIES}
 )
 
 
