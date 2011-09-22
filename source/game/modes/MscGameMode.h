@@ -1,11 +1,11 @@
 
 #include "game/input/InputReceiver.h"
+#include "game/world/World.h"
 
 #ifndef __MSCGAMEMODE_H_
 #define __MSCGAMEMODE_H_
 
 class InputHandler;
-class World;
 class McsHudGui;
 
 class MscGameMode :
@@ -53,7 +53,7 @@ protected:
 
 
 	bool mDoJump;
-	World* mLevel;
+	GameWorld::World* mLevel;
 	btKinematicCharacterController* mCharacter;
 	btPairCachingGhostObject* mGhostObject;
 

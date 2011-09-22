@@ -16,6 +16,7 @@ SET( ${TARGET_NAME}_HEADER
   game/world/ChunkPillar.h
   game/world/ChunkStorage.h
   game/world/World.h
+  game/world/WorldParams.h
   game/world/WorldRegion.h
   physics/BtOgreExtras.h
   physics/BtOgreGP.h

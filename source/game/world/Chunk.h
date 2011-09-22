@@ -2,9 +2,12 @@
 #include <cstdint>
 
 #include "game/types.h"
+#include "game/world/WorldParams.h"
 
 #ifndef _CHUNK_H_
 #define _CHUNK_H_
+
+namespace GameWorld {
 
 class World;
 
@@ -12,10 +15,6 @@ class Chunk
 {
 	// Attributes
 public:
-	static const uint8_t ChunkSizeX = 16;
-	static const uint8_t ChunkSizeY = 128;
-	static const uint8_t ChunkSizeZ = 16;
-
 	wCoord x, y,z;
 
 	uint8_t blocks[ChunkSizeX][ChunkSizeZ][ChunkSizeY];
@@ -141,6 +140,8 @@ protected:
 	bool			mVertexBufferCreated;
 
 	World& mLevel;
+};
+
 };
 
 #endif // #ifndef _CHUNK_H_

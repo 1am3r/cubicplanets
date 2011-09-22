@@ -62,10 +62,10 @@ void MscCreativeMode::init()
 
 void MscCreativeMode::start()
 {
-	mLevel = new World(23L, mSceneMgr);
+	mLevel = new GameWorld::World(23L, mSceneMgr);
 	mLevel->prepareRegion(0, 0, 0);
 
-	Chunk* startChunk = mLevel->getChunk(0, 0, 0);
+	GameWorld::Chunk* startChunk = mLevel->getChunk(0, 0, 0);
 	if (!startChunk){
 		exit(0);
 	}

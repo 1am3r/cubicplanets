@@ -3,25 +3,25 @@
 #include <array>
 
 #include "game/types.h"
-#include "Chunk.h"
-#include "ChunkStorage.h"
+#include "game/world/WorldParams.h"
+#include "game/world/Chunk.h"
+#include "game/world/ChunkStorage.h"
 
 #ifndef _CHUNKPILLAR_H_
 #define _CHUNKPILLAR_H_
 
+namespace GameWorld {
+
 class ChunkPillar
 {
-public:
-	static const wCoord ChunksInPillar = 64;
-	
 public:
 	wCoord x, z;
 
 	wCoord maxY, minY;
 	bool heightMapSet;
 
-	std::array<std::array<wCoord, Chunk::ChunkSizeZ>, Chunk::ChunkSizeX> heightMap;
-	std::array<Chunk*, ChunksInPillar> mChunks;
+	std::array<std::array<wCoord, ChunkSizeZ>, ChunkSizeX> heightMap;
+	std::array<Chunk*, ChunksPerPillar> mChunks;
 
 public:
 	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos);
@@ -36,11 +36,13 @@ public:
 	bool isModified() { return mModified; };
 
 private:
-	static size_t getChunkIndex(wCoord y) { return positiveMod(y, ChunksInPillar); };
+	static size_t getChunkIndex(wCoord y) { return positiveMod(y, ChunksPerPillar); };
 	
 private:
 	WorldRegion& mWRegion;
 	bool mModified;
+};
+
 };
 
 #endif // _CHUNKPILLAR_H_

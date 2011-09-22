@@ -11,6 +11,8 @@
 #include "game/world/ChunkStorage.h"
 
 
+namespace GameWorld {
+
 World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 	: mChunks(0), mCurX(0), mCurY(0), mCurZ(0), mChunkStore(0),
 	  mWorld(0), mWorldDirectory(boost::filesystem::initial_path()),
@@ -195,11 +197,11 @@ void World::setCubeType(wCoord x, wCoord y, wCoord z, uint8_t cubeType)
 	Chunk * curChunk = getChunk(xChunk, yChunk, zChunk);
 	curChunk->setCubeType(xCube, yCube, zCube, cubeType);
 
-	if (xCube == Chunk::ChunkSizeX - 1) updateChunk(xChunk + 1, yChunk    , zChunk    );
+	if (xCube == ChunkSizeX - 1) updateChunk(xChunk + 1, yChunk    , zChunk    );
 	if (xCube == 0)						updateChunk(xChunk - 1, yChunk    , zChunk    );
-	if (yCube == Chunk::ChunkSizeY - 1) updateChunk(xChunk    , yChunk + 1, zChunk    );
+	if (yCube == ChunkSizeY - 1) updateChunk(xChunk    , yChunk + 1, zChunk    );
 	if (yCube == 0)						updateChunk(xChunk    , yChunk - 1, zChunk    );
-	if (zCube == Chunk::ChunkSizeZ - 1) updateChunk(xChunk    , yChunk    , zChunk + 1);
+	if (zCube == ChunkSizeZ - 1) updateChunk(xChunk    , yChunk    , zChunk + 1);
 	if (zCube == 0)						updateChunk(xChunk    , yChunk    , zChunk - 1);
 }
 
@@ -282,3 +284,4 @@ void World::makeBox()
 	mBodies.push_back(defaultBody);
 }
 
+};

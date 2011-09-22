@@ -2,23 +2,23 @@
 #include <cstdint>
 
 #include "game/types.h"
-
-#include "Chunk.h"
-#include "WorldRegion.h"
+#include "game/world/WorldParams.h"
+#include "game/world/Chunk.h"
+#include "game/world/WorldRegion.h"
 
 #ifndef _CHUNKSTORAGE_H_
 #define _CHUNKSTORAGE_H_
 
-class World;
 class TerrainGenerator;
-class ChunkPillar;
 
+namespace GameWorld {
+
+class World;
+class ChunkPillar;
 
 class ChunkStorage
 {
 public:
-	static const uint16_t ActiveRegions = 3;
-
 	ChunkStorage(World& level);
 	~ChunkStorage();
 
@@ -29,13 +29,15 @@ public:
 	TerrainGenerator& getTerraGen() { return *mTerraGen; };
 private:
 	static size_t getRegionIndex(wCoord x, wCoord z){ return ((positiveMod(x, ActiveRegions) * ActiveRegions) + positiveMod(z, ActiveRegions)); };
-	static wCoord getChunkCoord(wCoord val) { return ((val < 0) ? (val - (WorldRegion::ChunkPillars - 1)) : val) / WorldRegion::ChunkPillars; };
+	static wCoord getChunkCoord(wCoord val) { return ((val < 0) ? (val - (RegionPillarsXZ - 1)) : val) / RegionPillarsXZ; };
 
 private:
 	World& mLevel;
 	TerrainGenerator* mTerraGen;
 
 	WorldRegion* mRegionMap[ActiveRegions * ActiveRegions];
+};
+
 };
 
 #endif // _CHUNKSTORAGE_H_

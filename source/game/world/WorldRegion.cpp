@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-#include "WorldRegion.h"
-
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -14,6 +12,8 @@
 
 
 #include "game/types.h"
+#include "game/world/WorldParams.h"
+#include "game/world/WorldRegion.h"
 #include "game/world/World.h"
 #include "game/world/ChunkStorage.h"
 #include "game/world/ChunkPillar.h"
@@ -21,6 +21,8 @@
 
 namespace bio = boost::iostreams;
 namespace bfs = boost::filesystem;
+
+namespace GameWorld {
 
 WorldRegion::WorldRegion(World& world, ChunkStorage& store, wCoord x, wCoord z) 
 	: mWorld(world), mStorage(store), xPos(x), zPos(z)
@@ -68,7 +70,7 @@ WorldRegion::~WorldRegion()
 
 void WorldRegion::createRegionFile()
 {
-	mFreeRegionSectors.resize(ChunkPillarsSize + 1, true);
+	mFreeRegionSectors.resize(PillarsPerRegion + 1, true);
 	mPillarOffsets.fill(0);
 
 	mRegionFile.seekp(0);
@@ -82,6 +84,7 @@ void WorldRegion::loadRegionFile()
 	uint32_t regionSectors = getRegionSectorCount();
 	mFreeRegionSectors.clear();
 	mFreeRegionSectors.resize(regionSectors, true);
+	mRegionFile.seekg(0);
 	mRegionFile.read(reinterpret_cast<char*>(mPillarOffsets.data()), mPillarOffsets.size() * sizeof(mPillarOffsets[0]));
 
 	for (size_t index = 0; index < mPillarOffsets.size(); ++index) {
@@ -94,6 +97,18 @@ void WorldRegion::loadRegionFile()
 	}
 
 	//TODO: the same for the chunk file
+	uint32_t chunkSectors = getChunkSectorCount();
+	mFreeChunkSectors.clear();
+	mFreeChunkSectors.resize(chunkSectors, true);
+	mChunkFile.seekg(0);
+	
+	bio::gzip_decompressor gzDecomp;
+	bio::filtering_istream gzIn;
+	gzIn.push(gzDecomp);
+	gzIn.push(mChunkFile);
+	for (uint32_t i = 0; i < 0; ++i) {
+
+	}
 }
 
 void WorldRegion::saveToStream(std::ostream& regionData, std::ostream& chunkData)
@@ -193,8 +208,8 @@ uint32_t WorldRegion::findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t n
 
 void WorldRegion::unloadPillars()
 {
-	for (wCoord x = 0; x < ChunkPillars; x++) {
-		for (wCoord z = 0; z < ChunkPillars; z++) {
+	for (wCoord x = 0; x < RegionPillarsXZ; x++) {
+		for (wCoord z = 0; z < RegionPillarsXZ; z++) {
 			size_t index = getPillarIndex(x, z);
 			delete mPillars[index];
 			mPillars[index] = 0;
@@ -253,10 +268,4 @@ ChunkPillar* WorldRegion::loadChunkPillar(wCoord x, wCoord z)
 
 }
 
-
-uint32_t WorldRegion::getChunkIndex(wCoord x, wCoord y, wCoord z)
-{
-	return (static_cast<uint8_t>(positiveMod(x, ChunkPillars)) << 24 | 
-			static_cast<uint8_t>(positiveMod(z, ChunkPillars)) << 16 |
-			static_cast<uint8_t>(positiveMod(y, ChunkPillar::ChunksInPillar)));
-}
+};

@@ -1,11 +1,13 @@
 #include "stdafx.h"
 
 #include "game/types.h"
+#include "game/world/WorldParams.h"
 #include "game/world/WorldRegion.h"
-#include "ChunkStorage.h"
-#include "ChunkPillar.h"
+#include "game/world/ChunkStorage.h"
+#include "game/world/ChunkPillar.h"
 #include "terrain/TerrainGenerator.h"
 
+namespace GameWorld {
 
 ChunkStorage::ChunkStorage(World& level) :
 	mLevel(level), mTerraGen(0)
@@ -50,3 +52,5 @@ WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
 
 	return *curRegion;
 }
+
+};

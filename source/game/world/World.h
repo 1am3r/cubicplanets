@@ -14,6 +14,8 @@
 #ifndef _WORLD_H_
 #define _WORLD_H_
 
+namespace GameWorld {
+
 class World
 {
 public:
@@ -68,15 +70,15 @@ public:
 private:
 	void makeCubeCoords(wCoord x, uint8_t& xLocal, wCoord y, uint8_t& yLocal, wCoord z, uint8_t& zLocal)
 	{
-		xLocal = x & (Chunk::ChunkSizeX - 1);
-		yLocal = y & (Chunk::ChunkSizeY - 1);
-		zLocal = z & (Chunk::ChunkSizeZ - 1);
+		xLocal = x & (ChunkSizeX - 1);
+		yLocal = y & (ChunkSizeY - 1);
+		zLocal = z & (ChunkSizeZ - 1);
 	};
 	void makeChunkCoords(wCoord x, wCoord& xChunk, wCoord y, wCoord& yChunk, wCoord z, wCoord& zChunk)
 	{
-		xChunk = ((x < 0) ? (x - (Chunk::ChunkSizeX - 1)) : x) / Chunk::ChunkSizeX;
-		yChunk = ((y < 0) ? (y - (Chunk::ChunkSizeY - 1)) : y) / Chunk::ChunkSizeY;
-		zChunk = ((z < 0) ? (z - (Chunk::ChunkSizeZ - 1)) : z) / Chunk::ChunkSizeZ;
+		xChunk = ((x < 0) ? (x - (ChunkSizeX - 1)) : x) / ChunkSizeX;
+		yChunk = ((y < 0) ? (y - (ChunkSizeY - 1)) : y) / ChunkSizeY;
+		zChunk = ((z < 0) ? (z - (ChunkSizeZ - 1)) : z) / ChunkSizeZ;
 	};
 
 	void registerChunkBody(Chunk& curChunk);
@@ -108,6 +110,8 @@ public:
 	
 	std::deque<btRigidBody*>				mBodies;
 	int mNumEntitiesInstanced;
+};
+
 };
 
 #endif // #ifndef _WORLD_H_

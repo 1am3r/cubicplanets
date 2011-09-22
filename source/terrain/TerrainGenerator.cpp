@@ -9,7 +9,7 @@
 #include "terrain/noise/RidgedMultifractalNoise2D.h"
 #include "terrain/noise/BillowNoise2D.h"
 
-TerrainGenerator::TerrainGenerator(World& world)
+TerrainGenerator::TerrainGenerator(GameWorld::World& world)
 	: mWorld(world),
 	mSelectorNoise(0),
 	mMountainsNoise(0),
@@ -35,27 +35,27 @@ TerrainGenerator::~TerrainGenerator()
 	}
 }
 
-void TerrainGenerator::setHeightMap(ChunkPillar& pillar, wCoord xPos, wCoord zPos)
+void TerrainGenerator::setHeightMap(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord zPos)
 {
 	if (!pillar.heightMapSet) {
 		generateHeightMap(pillar, xPos, zPos);
 	}
 }
 
-Chunk* TerrainGenerator::generateChunk(ChunkPillar& pillar, wCoord xPos, wCoord yPos, wCoord zPos)
+GameWorld::Chunk* TerrainGenerator::generateChunk(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord yPos, wCoord zPos)
 {
 	if (!pillar.heightMapSet) {
 		setHeightMap(pillar, xPos, zPos);
 	}
 
-	Chunk* newChunk = fillChunk(pillar, yPos);
+	GameWorld::Chunk* newChunk = fillChunk(pillar, yPos);
 
 	return newChunk;
 }
 
-void TerrainGenerator::generateHeightMap(ChunkPillar& pillar, wCoord xPos, wCoord zPos)
+void TerrainGenerator::generateHeightMap(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord zPos)
 {
-	//const uint16_t scale = (Chunk::ChunkSizeY * 6) / 13;
+	//const uint16_t scale = (GameWorld::ChunkSizeY * 6) / 13;
 	const uint16_t scale = 128;
 
 	wCoord maxY = WCOORD_MIN;
@@ -71,9 +71,9 @@ void TerrainGenerator::generateHeightMap(ChunkPillar& pillar, wCoord xPos, wCoor
 	const double mountainDiv = 1.38;
 	const double selectorDiv = 2.54;
 
-	for (int xi = 0; xi < Chunk::ChunkSizeX; xi++)
+	for (int xi = 0; xi < GameWorld::ChunkSizeX; xi++)
 	{
-		for (int zi = 0; zi < Chunk::ChunkSizeZ; zi++)
+		for (int zi = 0; zi < GameWorld::ChunkSizeZ; zi++)
 		{
 			double xin = ((xi + xPos * 16) / inputDiv);
 			double zin = ((zi + zPos * 16) / inputDiv);
@@ -95,7 +95,7 @@ void TerrainGenerator::generateHeightMap(ChunkPillar& pillar, wCoord xPos, wCoor
 				ground = ((1.0 - curve) * flat) + (curve * mountain);
 			}
 
-			wCoord height = (wCoord) (ground * scale); // + (Chunk::ChunkSizeY / 2);
+			wCoord height = (wCoord) (ground * scale); // + (GameWorld::ChunkSizeY / 2);
 			
 			if (height > maxY) maxY = height;
 			if (height < minY) minY = height;
@@ -109,28 +109,28 @@ void TerrainGenerator::generateHeightMap(ChunkPillar& pillar, wCoord xPos, wCoor
 	pillar.heightMapSet = true;
 }
 
-Chunk* TerrainGenerator::fillChunk(ChunkPillar& pillar, wCoord yPos)
+GameWorld::Chunk* TerrainGenerator::fillChunk(GameWorld::ChunkPillar& pillar, wCoord yPos)
 {
-	Chunk* newChunk = new Chunk(mWorld, pillar.x, yPos, pillar.z);
+	GameWorld::Chunk* newChunk = new GameWorld::Chunk(mWorld, pillar.x, yPos, pillar.z);
 	uint16_t heighestCube = 0;
 
-	if (pillar.maxY < yPos * Chunk::ChunkSizeY) {
+	if (pillar.maxY < yPos * GameWorld::ChunkSizeY) {
 		memset(newChunk->blocks, 0, sizeof(newChunk->blocks));
-	} else if (pillar.minY >= (yPos + 1) * Chunk::ChunkSizeY) {
-		heighestCube = Chunk::ChunkSizeY - 1;
+	} else if (pillar.minY >= (yPos + 1) * GameWorld::ChunkSizeY) {
+		heighestCube = GameWorld::ChunkSizeY - 1;
 		memset(newChunk->blocks, 3, sizeof(newChunk->blocks));
 	} else {
-		heighestCube = pillar.maxY - (yPos * Chunk::ChunkSizeY);
+		heighestCube = pillar.maxY - (yPos * GameWorld::ChunkSizeY);
 		if (heighestCube < 0) heighestCube = 0;
-		if (heighestCube >= Chunk::ChunkSizeY) heighestCube = Chunk::ChunkSizeY - 1;
+		if (heighestCube >= GameWorld::ChunkSizeY) heighestCube = GameWorld::ChunkSizeY - 1;
 
-		for (int xi = 0; xi < Chunk::ChunkSizeX; xi++) {
-			for (int zi = 0; zi < Chunk::ChunkSizeZ; zi++) {
+		for (int xi = 0; xi < GameWorld::ChunkSizeX; xi++) {
+			for (int zi = 0; zi < GameWorld::ChunkSizeZ; zi++) {
 				wCoord height = pillar.heightMap[xi][zi];
-				height -= yPos * Chunk::ChunkSizeY;
+				height -= yPos * GameWorld::ChunkSizeY;
 
 				if (height > 0) {
-					if (height >= Chunk::ChunkSizeY) height = Chunk::ChunkSizeY - 1;
+					if (height >= GameWorld::ChunkSizeY) height = GameWorld::ChunkSizeY - 1;
 
 					for (int yi = 0; yi <= height; yi++) {
 						newChunk->blocks[xi][zi][yi] = 3;

@@ -3,9 +3,13 @@
 #include <iostream>
 
 #include "game/types.h"
+#include "game/world/WorldParams.h"
 #include "game/world/ChunkPillar.h"
 #include "game/world/WorldRegion.h"
 #include "terrain/TerrainGenerator.h"
+
+
+namespace GameWorld {
 
 ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos)
 	: mWRegion(wRegion), x(xPos), z(zPos), heightMapSet(false), mModified(true)
@@ -31,7 +35,7 @@ void ChunkPillar::saveToStream(std::ostream& pillarData, std::ostream& chunkData
 
 void ChunkPillar::unloadChunks()
 {
-	for (int i = 0; i < ChunksInPillar; i++) {
+	for (int i = 0; i < ChunksPerPillar; i++) {
 		if (mChunks[i] != 0) {
 			delete mChunks[i];
 			mChunks[i] = 0;
@@ -53,4 +57,6 @@ Chunk* ChunkPillar::getChunk(wCoord y)
 	}	
 
 	return curChunk;
+};
+
 };
