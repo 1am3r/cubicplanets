@@ -111,14 +111,14 @@ void TerrainGenerator::generateHeightMap(GameWorld::ChunkPillar& pillar, wCoord 
 
 GameWorld::Chunk* TerrainGenerator::fillChunk(GameWorld::ChunkPillar& pillar, wCoord yPos)
 {
-	GameWorld::Chunk* newChunk = new GameWorld::Chunk(mWorld, pillar.x, yPos, pillar.z);
+	GameWorld::Chunk* newChunk = new GameWorld::Chunk(mWorld, pillar.mX, yPos, pillar.mZ);
 	uint16_t heighestCube = 0;
 
 	if (pillar.maxY < yPos * GameWorld::ChunkSizeY) {
-		memset(newChunk->blocks, 0, sizeof(newChunk->blocks));
+		newChunk->setEmpty();
 	} else if (pillar.minY >= (yPos + 1) * GameWorld::ChunkSizeY) {
 		heighestCube = GameWorld::ChunkSizeY - 1;
-		memset(newChunk->blocks, 3, sizeof(newChunk->blocks));
+		newChunk->fillBlocks(3);
 	} else {
 		heighestCube = pillar.maxY - (yPos * GameWorld::ChunkSizeY);
 		if (heighestCube < 0) heighestCube = 0;
@@ -133,16 +133,16 @@ GameWorld::Chunk* TerrainGenerator::fillChunk(GameWorld::ChunkPillar& pillar, wC
 					if (height >= GameWorld::ChunkSizeY) height = GameWorld::ChunkSizeY - 1;
 
 					for (int yi = 0; yi <= height; yi++) {
-						newChunk->blocks[xi][zi][yi] = 3;
+						newChunk->setCubeTypeLocal(xi, yi, zi, 3);
 					}
 
-					newChunk->blocks[xi][zi][height] = 2;
+					newChunk->setCubeTypeLocal(xi, height, zi, 2);
 				}
 			}
 		}
 	}
 
-	newChunk->heighestCube = heighestCube;
+	newChunk->setHighestCube(heighestCube);
 	return newChunk;
 }
 

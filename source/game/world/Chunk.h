@@ -1,5 +1,6 @@
-
 #include <cstdint>
+#include <iostream>
+#include <array>
 
 #include "game/types.h"
 #include "game/world/WorldParams.h"
@@ -10,49 +11,43 @@
 namespace GameWorld {
 
 class World;
+class ChunkStorage;
 
 class Chunk
 {
 	// Attributes
 public:
-	wCoord x, y,z;
-
-	uint8_t blocks[ChunkSizeX][ChunkSizeZ][ChunkSizeY];
-	uint8_t blocksData[ChunkSizeX][ChunkSizeZ][ChunkSizeY];
-
-	uint16_t heighestCube;
-
-	bool isEmpty;
+	wCoord mX, mY, mZ;
 
 	// Methods
 public:
 	Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos);
 	~Chunk();
 
+	// Saving
+	void saveToStream(std::ostream& data);
+
 	void activateChunk() {};
 	void deactiveChunk() {};
 
-	Ogre::String& getChunkName();
+	Ogre::String& getChunkName(){ return mChunkName; };
 	uint32_t getHighestCube(uint8_t x, uint8_t z);
 
-	uint8_t getCubeType(uint8_t x, uint8_t y, uint8_t z)
-	{
-		return blocks[x][z][y];
-	};
-	uint8_t getCubeData(uint8_t x, uint8_t y, uint8_t z)
-	{
-		return blocksData[x][z][y];
-	};
-	void setCubeType(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType)
-	{
-		blocks[x][z][y] = cubeType;
-		mIsModified = true;
-		update();
-	};
-	void setCubeData(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeData)
-	{
-		blocksData[x][z][y] = cubeData;
-	};
+	void fillBlocks(uint8_t cubeType) { blocks.fill(cubeType); };
+	void setEmpty() { /* Do we need to do anything here? */ };
+
+	void setCubeTypeLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType) { blocks[getCubeIndex(x, y, z)] = cubeType; };
+	void setCubeDataLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeData) { blocksData[getCubeIndex(x, y, z)] = cubeData; };
+	uint8_t getCubeTypeLocal(uint8_t x, uint8_t y, uint8_t z) { return blocks[getCubeIndex(x, y, z)]; };
+	uint8_t getCubeDataLocal(uint8_t x, uint8_t y, uint8_t z) { return blocksData[getCubeIndex(x, y, z)]; };
+
+	void setHighestCube(uint16_t height) { mHighestCube = height; };
+	//void setCubeType(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType)
+	//{
+	//	blocks[x][z][y] = cubeType;
+	//	mIsModified = true;
+	//	update();
+	//};
 
 	bool isChunkActive() { return mSceneAttached; };
 
@@ -70,6 +65,14 @@ public:
 	void deactivatePhysicsBody();
 
 private:
+	std::array<uint8_t, ChunkSizeX * ChunkSizeY * ChunkSizeZ> blocks;
+	std::array<uint8_t, ChunkSizeX * ChunkSizeY * ChunkSizeZ> blocksData;
+	uint16_t mHighestCube;
+
+	bool isEmpty;
+
+	static size_t getCubeIndex(uint8_t x, uint8_t y, uint8_t z) { return ((x * ChunkSizeZ + z) * ChunkSizeY) + y; };
+	
 	// position: 3 floats, normal: 3 floats, texture: 2 floats
 	static const uint8_t VertexSize = 3 + 3 + 2;
 	// default vertices count per chunk
@@ -99,6 +102,9 @@ private:
 	};
 
 private:
+	// init members
+	void initChunk();
+
 	// init / destroy ogre entity
 	void initEntity();
 	void destroyEntity();
@@ -140,6 +146,7 @@ protected:
 	bool			mVertexBufferCreated;
 
 	World& mLevel;
+	ChunkStorage& mStorage;
 };
 
 };

@@ -3,22 +3,18 @@
 #include "game/types.h"
 #include "game/world/WorldParams.h"
 #include "game/world/Chunk.h"
+#include "game/world/ChunkStorage.h"
 #include "game/world/World.h"
 
 namespace GameWorld {
 
 Chunk::Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos)
-	: mLevel(world), mChunkEntity(0), mChunkScene(0), mSceneAttached(false), mMeshGenerated(false),
+	: mLevel(world), mStorage(world.getStorage()), mChunkEntity(0), mChunkScene(0), mSceneAttached(false), mMeshGenerated(false),
 	  mPhysicsIvArray(0), mPhysicsShape(0), mPhysicsBody(0), mPhysicsAttached(false),
-	  x(xPos), y(yPos), z(zPos), heighestCube(ChunkSizeY - 1), isEmpty(false),
+	  mX(xPos), mY(yPos), mZ(zPos), mHighestCube(ChunkSizeY - 1), isEmpty(false),
 	  mNumVertices(0), mNumIndices(0), mVertices(0), mIndices(0), mIsModified(true), mVertexBufferCreated(false)
 {
-	std::ostringstream chunkNameStream;
-	chunkNameStream << "chunk" << x << "_" << y << "_" << z;
-	mChunkName.assign(chunkNameStream.str()); 
-
-	memset(&blocks, 0, sizeof(blocks));
-	memset(&blocksData, 0, sizeof(blocksData));
+	initChunk();
 }
 
 Chunk::~Chunk()
@@ -36,21 +32,31 @@ Chunk::~Chunk()
 	}
 }
 
-
-Ogre::String& Chunk::getChunkName()
+void Chunk::initChunk()
 {
-	return mChunkName;
+	std::ostringstream chunkNameStream;
+	chunkNameStream << "chunk" << mX << "_" << mY << "_" << mZ;
+	mChunkName.assign(chunkNameStream.str()); 
+
+	blocks.fill(0);
+	blocksData.fill(0);
 }
+
+void Chunk::saveToStream(std::ostream& data)
+{
+
+}
+
 
 uint32_t Chunk::getHighestCube(uint8_t xPos, uint8_t zPos)
 {
 	for (uint8_t yPos = (ChunkSizeY - 1); yPos != 0; yPos--) {
-		if (blocks[xPos][zPos][yPos] != 0) {
+		if (blocks[getCubeIndex(xPos, yPos, zPos)] != 0) {
 			return yPos;
 		}
 	}
 
-	return (ChunkSizeY - 1);
+	return 0;
 }
 
 
@@ -132,9 +138,9 @@ void Chunk::initEntity()
 		mChunkScene->attachObject(mChunkEntity);
 		
 		mChunkScene->setPosition(
-			Ogre::Real(x * ChunkSizeX), 
-			Ogre::Real(y * ChunkSizeY), 
-			Ogre::Real(z * ChunkSizeZ));
+			Ogre::Real(mX * ChunkSizeX), 
+			Ogre::Real(mY * ChunkSizeY), 
+			Ogre::Real(mZ * ChunkSizeZ));
 	} else {
 		generateEntityMesh();
 		
@@ -212,9 +218,9 @@ void Chunk::initPhysicsBody()
 		btTransform trans;
 		trans.setIdentity();
 		trans.setOrigin(btVector3((btScalar)
-			(btScalar) (x * ChunkSizeX), 
-			(btScalar) (y * ChunkSizeY), 
-			(btScalar) (z * ChunkSizeZ))); 
+			(btScalar) (mX * ChunkSizeX), 
+			(btScalar) (mY * ChunkSizeY), 
+			(btScalar) (mZ * ChunkSizeZ))); 
 		btMotionState* mState = new btDefaultMotionState(trans);
 		btRigidBody::btRigidBodyConstructionInfo cInfo(0.0f, mState, newShape);
 
@@ -260,12 +266,12 @@ void Chunk::destroyPhysicsBody()
 // Mesh generation
 void Chunk::getVisibleFaces(std::vector<CubeFace*>& visFaces)
 {
-	Chunk* leftChunk	= mLevel.getChunk(x - 1, y    , z    );
-	Chunk* rightChunk	= mLevel.getChunk(x + 1, y    , z    );
-	Chunk* backChunk	= mLevel.getChunk(x	   , y    , z - 1);
-	Chunk* frontChunk	= mLevel.getChunk(x	   , y    , z + 1);
-	Chunk* bottomChunk	= mLevel.getChunk(x	   , y - 1, z    );
-	Chunk* topChunk		= mLevel.getChunk(x	   , y + 1, z    );
+	Chunk* leftChunk	= mStorage.getChunkLocal(mX - 1, mY    , mZ    );
+	Chunk* rightChunk	= mStorage.getChunkLocal(mX + 1, mY    , mZ    );
+	Chunk* backChunk	= mStorage.getChunkLocal(mX	 , mY    , mZ - 1);
+	Chunk* frontChunk	= mStorage.getChunkLocal(mX	 , mY    , mZ + 1);
+	Chunk* bottomChunk	= mStorage.getChunkLocal(mX	 , mY - 1, mZ    );
+	Chunk* topChunk		= mStorage.getChunkLocal(mX	 , mY + 1, mZ    );
 
 	for (uint8_t xLocal = 0; xLocal < ChunkSizeX; xLocal++) 
 	{
@@ -273,76 +279,76 @@ void Chunk::getVisibleFaces(std::vector<CubeFace*>& visFaces)
 		{
 			for (uint8_t yLocal = 0; yLocal < ChunkSizeY; yLocal++)
 			{
-				uint8_t cubeType = blocks[xLocal][zLocal][yLocal];
+				uint8_t cubeType = getCubeTypeLocal(xLocal, yLocal, zLocal);
 				if (cubeType != 0)
 				{
 
 					CubeFace* cFace = 0;
 					if (xLocal == 0) {
-						if ((leftChunk != 0) && (leftChunk->blocks[ChunkSizeX - 1][zLocal][yLocal] == 0)) {
+						if ((leftChunk != 0) && (leftChunk->getCubeTypeLocal(ChunkSizeX - 1, yLocal, zLocal) == 0)) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, LEFT, cubeType));
 						}
-						if (blocks[xLocal + 1][zLocal][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal + 1, yLocal, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, RIGHT, cubeType));
 						}
 					} else if (xLocal == ChunkSizeX - 1) {
-						if (blocks[xLocal - 1][zLocal][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal - 1, yLocal, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, LEFT, cubeType));
 						}
-						if ((rightChunk != 0) && (rightChunk->blocks[0][zLocal][yLocal] == 0)) {
+						if ((rightChunk != 0) && (rightChunk->getCubeTypeLocal(0, yLocal, zLocal) == 0)) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, RIGHT, cubeType));
 						}
 					} else {
-						if (blocks[xLocal - 1][zLocal][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal - 1, yLocal, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, LEFT, cubeType));
 						}
-						if (blocks[xLocal + 1][zLocal][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal + 1, yLocal, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, RIGHT, cubeType));
 						}
 					}
 
 					if (zLocal == 0) {
-						if ((backChunk != 0) && (backChunk->blocks[xLocal][ChunkSizeZ - 1][yLocal] == 0)) {
+						if ((backChunk != 0) && (backChunk->getCubeTypeLocal(xLocal, yLocal, ChunkSizeZ - 1) == 0)) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, BACK, cubeType));
 						}
-						if (blocks[xLocal][zLocal + 1][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal, zLocal + 1) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, FRONT, cubeType));
 						}
 					} else if (zLocal == ChunkSizeZ - 1) {
-						if (blocks[xLocal][zLocal - 1][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal, zLocal - 1) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, BACK, cubeType));
 						}
-						if ((frontChunk != 0) && (frontChunk->blocks[xLocal][0][yLocal] == 0)) {
+						if ((frontChunk != 0) && (frontChunk->getCubeTypeLocal(xLocal, yLocal, 0) == 0)) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, FRONT, cubeType));
 						}
 					} else {
-						if (blocks[xLocal][zLocal - 1][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal, zLocal - 1) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, BACK, cubeType));
 						}
-						if (blocks[xLocal][zLocal + 1][yLocal] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal, zLocal + 1) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, FRONT, cubeType));
 						}
 					}
 
 					if (yLocal == 0) {
-						if ((bottomChunk != 0) && (bottomChunk->blocks[xLocal][zLocal][ChunkSizeY - 1] == 0)) {
+						if ((bottomChunk != 0) && (bottomChunk->getCubeTypeLocal(xLocal, ChunkSizeY - 1, zLocal) == 0)) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, BOTTOM, cubeType));
 						}
-						if (blocks[xLocal][zLocal][yLocal + 1] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal + 1, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, TOP, cubeType));
 						}
 					} else if (yLocal == ChunkSizeY - 1) {
-						if (blocks[xLocal][zLocal][yLocal - 1] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal - 1, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, BOTTOM, cubeType));
 						}
-						if ((topChunk != 0) && (topChunk->blocks[xLocal][zLocal][0] == 0)) {
+						if ((topChunk != 0) && (topChunk->getCubeTypeLocal(xLocal, 0, zLocal) == 0)) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, TOP, cubeType));
 						}
 					} else {
-						if (blocks[xLocal][zLocal][yLocal - 1] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal - 1, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, BOTTOM, cubeType));
 						}
-						if (blocks[xLocal][zLocal][yLocal + 1] == 0) {
+						if (getCubeTypeLocal(xLocal, yLocal + 1, zLocal) == 0) {
 							visFaces.push_back(new CubeFace(xLocal, yLocal, zLocal, TOP, cubeType));
 						}
 					}
@@ -646,7 +652,7 @@ void Chunk::generateMesh()
 		sub->indexData->indexCount = mNumIndices;
 
 		/// Set bounding information (for culling)
-		mMeshPtr->_setBounds(Ogre::AxisAlignedBox(0, 0, 0, Ogre::Real(ChunkSizeX), Ogre::Real(heighestCube), Ogre::Real(ChunkSizeZ)));
+		mMeshPtr->_setBounds(Ogre::AxisAlignedBox(0, 0, 0, Ogre::Real(ChunkSizeX), Ogre::Real(mHighestCube), Ogre::Real(ChunkSizeZ)));
 		mMeshPtr->_setBoundingSphereRadius((Ogre::Real) std::sqrt((float) (2 * 16 * 16 + 128 * 128)));
  
 		/// Notify -Mesh object that it has been loaded
@@ -668,7 +674,7 @@ void Chunk::generateMesh()
 		Ogre::HardwareIndexBufferSharedPtr ibuf = sub->indexData->indexBuffer;
 		ibuf->writeData(0, (ibuf->getIndexSize() * mNumIndices), mIndices, true);
 
-		mMeshPtr->_setBounds(Ogre::AxisAlignedBox(0, 0, 0, Ogre::Real(ChunkSizeX), Ogre::Real(heighestCube), Ogre::Real(ChunkSizeZ)));
+		mMeshPtr->_setBounds(Ogre::AxisAlignedBox(0, 0, 0, Ogre::Real(ChunkSizeX), Ogre::Real(mHighestCube), Ogre::Real(ChunkSizeZ)));
 		mMeshPtr->load();
 	}
 }

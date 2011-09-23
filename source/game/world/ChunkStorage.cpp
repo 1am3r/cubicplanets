@@ -25,20 +25,30 @@ ChunkStorage::~ChunkStorage()
 	}
 }
 
-Chunk* ChunkStorage::getChunk(wCoord x, wCoord y, wCoord z)
+Chunk* ChunkStorage::getChunkAbs(wCoord x, wCoord y, wCoord z)
 {
-	return getPillar(x, z).getChunk(y);
+	return getPillarAbs(x, z).getChunk(getChunkIndexY(y));
 }
 
-ChunkPillar& ChunkStorage::getPillar(wCoord x, wCoord z)
+ChunkPillar& ChunkStorage::getPillarAbs(wCoord x, wCoord z)
 {
-	return getRegion(x, z).getPillar(x, z);
+	return getRegion(getChunkCoordXZ(x), getChunkCoordXZ(z)).getPillar(getChunkIndexXZ(x), getChunkIndexXZ(z));
+}
+
+Chunk* ChunkStorage::getChunkLocal(wCoord x, wCoord y, wCoord z)
+{
+	return getPillarLocal(x, z).getChunk(getChunkIndexYLocal(y));
+}
+
+ChunkPillar& ChunkStorage::getPillarLocal(wCoord x, wCoord z)
+{
+	return getRegion(x, z).getPillar(getChunkIndexXZLocal(x), getChunkIndexXZLocal(z));
 }
 
 WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
 {
-	x = getChunkCoord(x);
-	z = getChunkCoord(z);
+	x = getRegionCoord(x);
+	z = getRegionCoord(z);
 	size_t index = getRegionIndex(x, z);
 
 	WorldRegion* curRegion = mRegionMap[index];
@@ -51,6 +61,30 @@ WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
 	}
 
 	return *curRegion;
+}
+
+void ChunkStorage::updateChunkLocal(wCoord x, wCoord y, wCoord z)
+{
+	updateChunkAbs(x * ChunkSizeX, y * ChunkSizeY, z * ChunkSizeZ);
+}
+
+void ChunkStorage::updateChunkAbs(wCoord x, wCoord y, wCoord z)
+{
+	Chunk* curChunk = getChunkAbs(x, y, z);
+	curChunk->setModified();
+	curChunk->update();
+}
+
+void ChunkStorage::cubeModifiedAbs(wCoord x, wCoord y, wCoord z)
+{
+	updateChunkAbs(x, y, z);
+	
+	if (getCubeIndexXZ(x) == ChunkSizeX - 1) updateChunkAbs(x + ChunkSizeX, y             , z             );
+	if (getCubeIndexXZ(x) == 0)				 updateChunkAbs(x - ChunkSizeX, y             , z             );
+	if (getCubeIndexY(y)  == ChunkSizeY - 1) updateChunkAbs(x             , y + ChunkSizeY, z             );
+	if (getCubeIndexY(y)  == 0)				 updateChunkAbs(x             , y - ChunkSizeY, z             );
+	if (getCubeIndexXZ(z) == ChunkSizeZ - 1) updateChunkAbs(x             , y             , z + ChunkSizeZ);
+	if (getCubeIndexXZ(z) == 0)				 updateChunkAbs(x             , y             , z - ChunkSizeZ);
 }
 
 };

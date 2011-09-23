@@ -167,8 +167,8 @@ void WorldRegion::loadChunksFile()
 			// Mark sectors as used
 			uint32_t sector = getSectorFromOffset(offset);
 			uint8_t numSectors = getSectorSizeFromOffset(offset); 
-			for (uint8_t i = sector; i < sector + numSectors; ++i) {
-				mFreeChunkSectors[i] = false;
+			for (uint8_t j = sector; j < sector + numSectors; ++j) {
+				mFreeChunkSectors[j] = false;
 			}
 		}
 	}
@@ -193,13 +193,13 @@ void WorldRegion::saveToStream(std::ostream& regionData, std::ostream& chunkData
 		if ((*pillarIt != 0) && (*pillarIt)->isModified()) {
 			std::ostringstream pillarData;
 			gzOut.push(pillarData);
-			(*pillarIt)->saveToStream(gzOut, chunkData);
+			(*pillarIt)->saveToStream(gzOut);
 			gzOut.pop();
 
 			uint32_t pillarDataSize = static_cast<uint32_t>(pillarData.str().size());
 			uint32_t sectorOffset = findFreeRegionSectorOffset(*pillarIt, pillarDataSize);
 			if (sectorOffset == 0) {
-				throw std::exception("Couldn't find free sector big enough!");
+				throw std::exception("Couldn't find big enough free sector in RegionFile!");
 			}
 
 			uint32_t offset = getSectorFromOffset(sectorOffset) * RegionFileSectorSize;
@@ -208,14 +208,17 @@ void WorldRegion::saveToStream(std::ostream& regionData, std::ostream& chunkData
 		}
 	}
 
-	// Save region file
+	// Save RegionFile Header
 	regionData.seekp(0);
 	regionData.write(reinterpret_cast<char*>(mPillarOffsets.data()), mPillarOffsets.size() * sizeof(mPillarOffsets[0]));
+
+	// Now save the chunks
+	saveChunksToStream(chunkData);
 }
 
 uint32_t WorldRegion::findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t neededSize)
 {
-	size_t index = getPillarIndex(pillar->x, pillar->z);
+	size_t index = getPillarIndex(pillar->mX, pillar->mZ);
 	uint8_t neededSectors = (neededSize / RegionFileSectorSize) + 1;
 
 	uint32_t offset = mPillarOffsets[index];
@@ -277,11 +280,112 @@ uint32_t WorldRegion::findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t n
 	return offset;
 }
 
+void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
+{
+	// Save the chunks
+	bio::gzip_compressor gzComp;
+	bio::filtering_ostream gzOut;
+	gzOut.push(gzComp);
+	std::vector<Chunk*> chunksToSave;
+	for (auto pillarIt = mPillars.begin(); pillarIt != mPillars.end(); ++pillarIt) {
+		
+		for (size_t numChunks = 0; numChunks < chunksToSave.size(); ++numChunks) {
+			Chunk* curChunk = chunksToSave[numChunks];
+			std::ostringstream chunkData;
+			gzOut.push(chunkData);
+			curChunk->saveToStream(gzOut);
+			gzOut.pop();
+
+			uint32_t chunkDataSize = static_cast<uint32_t>(chunkData.str().size());
+			uint32_t sectorOffset = findFreeChunkSectorOffset(curChunk, chunkDataSize);
+			if (sectorOffset == 0) {
+				throw std::exception("Couldn't find big enough free sector in ChunkFile!");
+			}
+
+			uint32_t offset = getSectorFromOffset(sectorOffset) * ChunkFileSectorSize;
+			chunksDataStream.seekp(offset);
+			chunksDataStream.write(chunkData.str().c_str(), chunkDataSize);
+		}
+		chunksToSave.clear();
+	}
+
+
+	// Save ChunkFile Header
+	for (auto chunkIt = mChunkOffsets.begin(); chunkIt != mChunkOffsets.end(); ++chunkIt) {
+		chunksDataStream.seekp(convertChunkPosKeyToIndex(chunkIt->first));
+		chunksDataStream.write(reinterpret_cast<char*>(&chunkIt->second), sizeof(chunkIt->second));
+	}
+}
+
+uint32_t WorldRegion::findFreeChunkSectorOffset(Chunk* chunk, uint32_t neededSize)
+{
+	size_t index = getChunkIndex(chunk->mX, chunk->mY, chunk->mZ);
+	uint8_t neededSectors = (neededSize / ChunkFileSectorSize) + 1;
+
+	uint32_t offset = mChunkOffsets[index];
+	if (getSectorSizeFromOffset(offset) < neededSectors) {
+		// Need more space, search a bigger place
+
+		// At first, mark old sectors as free
+		for (uint32_t i = getSectorFromOffset(offset); i < getSectorSizeFromOffset(offset); ++i) {
+			mFreeChunkSectors[i] = true;
+		}
+
+		// Set result to not found
+		offset = 0;
+
+		// Now search for a big enough space
+		auto startIt = mFreeChunkSectors.begin();
+		auto endIt = mFreeChunkSectors.end();
+		while (startIt != endIt) {
+			// Find first free
+			auto posIt = std::find(startIt, endIt, true);
+
+			// Save first free for index calculation
+			startIt = posIt;
+
+			// Test if enough space is free
+			uint8_t free;
+			for (free = 1; free < neededSectors; ++free) {
+				++posIt;
+				if (*posIt == false || posIt == endIt) {
+					break;
+				}
+			}
+			if (free == neededSectors) {
+				// Found big enough place
+				uint32_t sector = std::distance(mFreeChunkSectors.begin(), startIt);
+				offset = makeOffset(sector, neededSectors);
+				
+				if (sector + neededSectors > mFreeChunkSectors.size()) {
+					mFreeChunkSectors.resize(mFreeChunkSectors.size() * 2, true);
+				}
+
+				// Mark found sectors as used
+				mChunkOffsets[index] = offset;
+				for (uint32_t i = sector; i < sector + neededSectors; ++i) {
+					mFreeChunkSectors[i] = false;
+				}
+
+				break;
+			} else {
+				// not big enough, start over
+				startIt = posIt;
+			}
+		}
+
+	} else {
+		// Old space is big enough, reuse it
+	}
+
+	return offset;
+}
+
 void WorldRegion::unloadPillars()
 {
-	for (wCoord x = 0; x < RegionPillarsXZ; x++) {
-		for (wCoord z = 0; z < RegionPillarsXZ; z++) {
-			size_t index = getPillarIndex(x, z);
+	for (uint8_t x = 0; x < RegionPillarsXZ; x++) {
+		for (uint8_t z = 0; z < RegionPillarsXZ; z++) {
+			size_t index = getPillarIndexLocal(x, z);
 			delete mPillars[index];
 			mPillars[index] = 0;
 		}
@@ -293,10 +397,10 @@ TerrainGenerator& WorldRegion::getTerraGen()
 	return mStorage.getTerraGen();
 }
 
-ChunkPillar& WorldRegion::getPillar(wCoord x, wCoord z)
+ChunkPillar& WorldRegion::getPillar(uint8_t x, uint8_t z)
 {
 	ChunkPillar* curPillar;
-	size_t index = getPillarIndex(x, z);
+	size_t index = getPillarIndexLocal(x, z);
 
 	curPillar = mPillars[index];
 	if (curPillar == 0) {
@@ -313,14 +417,16 @@ ChunkPillar& WorldRegion::getPillar(wCoord x, wCoord z)
 	return *curPillar;
 }
 
-ChunkPillar* WorldRegion::createChunkPillar(wCoord x, wCoord z)
+ChunkPillar* WorldRegion::createChunkPillar(uint8_t x, uint8_t z)
 {
-	return new ChunkPillar(*this, x, z);
+	wCoord xAbs = xPos * RegionPillarsXZ + x;
+	wCoord zAbs = zPos * RegionPillarsXZ + z;
+	return new ChunkPillar(*this, xAbs, zAbs);
 }
 
-ChunkPillar* WorldRegion::loadChunkPillar(wCoord x, wCoord z)
+ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
 {
-	uint32_t index = getPillarIndex(x, z);
+	uint32_t index = getPillarIndexLocal(x, z);
 	uint32_t offset = mPillarOffsets[index];
 	if (offset == 0) {
 		// Pillar is not generated yet

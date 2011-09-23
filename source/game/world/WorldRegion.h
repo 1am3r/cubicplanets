@@ -34,9 +34,7 @@ class ChunkStorage;
 
 class WorldRegion
 {
-public:
-
-
+	friend class ChunkStorage;
 public:
 	WorldRegion(World& world, ChunkStorage& store, wCoord x, wCoord z);
 	~WorldRegion();
@@ -46,7 +44,6 @@ public:
 	bool checkCoords(wCoord x, wCoord z) { return (x == xPos && z == zPos); };
 
 	void unloadPillars();
-	ChunkPillar& getPillar(wCoord x, wCoord z);
 
 	TerrainGenerator& getTerraGen();
 
@@ -71,17 +68,21 @@ private:
 	std::map<uint32_t, uint32_t> mChunkOffsets;
 	uint8_t mChunkFileHeaderSectors;
 
+private:
+	ChunkPillar& getPillar(uint8_t x, uint8_t z);
+
 	void createRegionFile();
 	void loadRegionFile();
 	void createChunksFile();
 	void loadChunksFile();
 	void saveToStream(std::ostream& regionData, std::ostream& chunkData);
+	void saveChunksToStream(std::ostream& chunkData);
 
-	ChunkPillar* createChunkPillar(wCoord x, wCoord z);
-	ChunkPillar* loadChunkPillar(wCoord x, wCoord z);
+	ChunkPillar* createChunkPillar(uint8_t x, uint8_t z);
+	ChunkPillar* loadChunkPillar(uint8_t x, uint8_t z);
 
 	uint32_t findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t neededSize);
-	uint32_t findFreeChunkSectorOffset(Chunk* pillar, uint32_t neededSize);
+	uint32_t findFreeChunkSectorOffset(Chunk* chunk, uint32_t neededSize);
 
 	inline uint32_t getRegionSectorCount() { return (mRegionFileSize / RegionFileSectorSize) + 1; };
 	inline uint32_t getChunkSectorCount()  { return (mChunkFileSize / ChunkFileSectorSize) + 1; };

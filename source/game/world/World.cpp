@@ -136,7 +136,7 @@ void World::updateCachedChunk(wCoord x, wCoord y, wCoord z)
 	if (curChunk != 0 && curChunk->isChunkActive()) {
 		curChunk->deactivateEntity();
 	}
-	curChunk = getChunk(x, y, z);
+	curChunk = mChunkStore->getChunkLocal(x, y, z);
 	setCachedChunk(x, y, z, curChunk);
 	curChunk->activateEntity();
 	curChunk->activatePhysicsBody();
@@ -169,16 +169,16 @@ void World::prepareRegion(wCoord x, wCoord y, wCoord z)
 }
 
 
-void World::updateChunk(Chunk& curChunk)
-{
-	curChunk.setModified();
-	curChunk.update();
-}
-
-void World::updateChunk(wCoord xPos, wCoord yPos, wCoord zPos)
-{
-	updateChunk(*getChunk(xPos, yPos, zPos));
-}
+//void World::updateChunk(Chunk& curChunk)
+//{
+//	curChunk.setModified();
+//	curChunk.update();
+//}
+//
+//void World::updateChunk(wCoord xPos, wCoord yPos, wCoord zPos)
+//{
+//	updateChunk(*getChunk(xPos, yPos, zPos));
+//}
 
 
 void World::setCubeType(Point3& position, uint8_t cubeType)
@@ -188,21 +188,8 @@ void World::setCubeType(Point3& position, uint8_t cubeType)
 
 void World::setCubeType(wCoord x, wCoord y, wCoord z, uint8_t cubeType)
 {
-	uint8_t xCube, yCube, zCube;
-	makeCubeCoords(x, xCube, y, yCube, z, zCube);
-
-	wCoord xChunk, yChunk, zChunk;
-	makeChunkCoords(x, xChunk, y, yChunk, z, zChunk);
-
-	Chunk * curChunk = getChunk(xChunk, yChunk, zChunk);
-	curChunk->setCubeType(xCube, yCube, zCube, cubeType);
-
-	if (xCube == ChunkSizeX - 1) updateChunk(xChunk + 1, yChunk    , zChunk    );
-	if (xCube == 0)						updateChunk(xChunk - 1, yChunk    , zChunk    );
-	if (yCube == ChunkSizeY - 1) updateChunk(xChunk    , yChunk + 1, zChunk    );
-	if (yCube == 0)						updateChunk(xChunk    , yChunk - 1, zChunk    );
-	if (zCube == ChunkSizeZ - 1) updateChunk(xChunk    , yChunk    , zChunk + 1);
-	if (zCube == 0)						updateChunk(xChunk    , yChunk    , zChunk - 1);
+	mChunkStore->setCubeType(x, y, z, cubeType);
+	mChunkStore->cubeModifiedAbs(x, y, z);
 }
 
 
@@ -221,16 +208,12 @@ void World::setCurrentPosition(wCoord x, wCoord y, wCoord z)
 
 void World::updatePlayerPosition(wCoord x, wCoord y, wCoord z)
 {
-	wCoord xNew, yNew, zNew;
+	x = getChunkCoordXZ(x) - mCurX;
+	y = getChunkCoordY(y) -  mCurY;
+	z = getChunkCoordXZ(z) - mCurZ;
 
-	makeChunkCoords(x, xNew, y, yNew, z, zNew);
-
-	xNew -= mCurX;
-	yNew -= mCurY;
-	zNew -= mCurZ;
-
-	if ((xNew != 0) || (yNew != 0) || (zNew != 0)) {
-		moveCurrentPosition(xNew, yNew, zNew);
+	if ((x != 0) || (y != 0) || (z != 0)) {
+		moveCurrentPosition(x, y, z);
 	}
 }
 

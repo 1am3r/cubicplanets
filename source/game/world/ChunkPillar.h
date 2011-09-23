@@ -14,31 +14,33 @@ namespace GameWorld {
 
 class ChunkPillar
 {
+	friend class ChunkStorage;
+	friend class WorldRegion;
 public:
-	wCoord x, z;
+	wCoord mX, mZ;
 
 	wCoord maxY, minY;
 	bool heightMapSet;
 
 	std::array<std::array<wCoord, ChunkSizeZ>, ChunkSizeX> heightMap;
-	std::array<Chunk*, ChunksPerPillar> mChunks;
 
 public:
 	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos);
 	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::istream& data);
 	~ChunkPillar() { unloadChunks(); };
 
-	void saveToStream(std::ostream& pillarData, std::ostream& chunkData);
+	void saveToStream(std::ostream& pillarData);
 
 	void unloadChunks();
-	Chunk* getChunk(wCoord y);
 
 	bool isModified() { return mModified; };
 
 private:
-	static size_t getChunkIndex(wCoord y) { return positiveMod(y, ChunksPerPillar); };
-	
+	static size_t getChunkIndex(uint8_t y) { return y; };
+	Chunk* getChunk(uint8_t y);
+
 private:
+	std::array<Chunk*, ChunksPerPillar> mChunks;
 	WorldRegion& mWRegion;
 	bool mModified;
 };

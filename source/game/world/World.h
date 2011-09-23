@@ -5,8 +5,6 @@
 
 #include "game/types.h"
 #include "game/randomGen.h"
-#include "game/world/Chunk.h"
-#include "game/world/ChunkStorage.h"
 #include "physics/BtOgreExtras.h"
 #include "physics/BtOgreGP.h"
 #include "physics/BtOgrePG.h"
@@ -15,6 +13,9 @@
 #define _WORLD_H_
 
 namespace GameWorld {
+
+class Chunk;
+class ChunkStorage;
 
 class World
 {
@@ -30,14 +31,10 @@ public:
 
 	void World::prepareRegion(wCoord x, wCoord y, wCoord z);
 
-	Chunk* getChunk(wCoord xPos, wCoord yPos, wCoord zPos) { return mChunkStore->getChunk(xPos, yPos, zPos); };
-	Chunk* loadChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 	void activateChunk(Chunk& curChunk);
 	void activateChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 	void deactivateChunk(Chunk& curChunk);
 	void deactivateChunk(wCoord xPos, wCoord yPos, wCoord zPos);
-	void updateChunk(Chunk& curChunk);
-	void updateChunk(wCoord xPos, wCoord yPos, wCoord zPos);
 
 	Chunk* getCachedChunk(wCoord x, wCoord y, wCoord z);
 	void setCachedChunk(wCoord x, wCoord y, wCoord z, Chunk* chunk);
@@ -63,24 +60,12 @@ public:
 
 	boost::filesystem::path getWorldDirectory() { return mWorldDirectory; };
 
+	ChunkStorage& getStorage() { return *mChunkStore; };
 
 	//HACK: Bullet test boxes
 	void makeBox();
 
 private:
-	void makeCubeCoords(wCoord x, uint8_t& xLocal, wCoord y, uint8_t& yLocal, wCoord z, uint8_t& zLocal)
-	{
-		xLocal = x & (ChunkSizeX - 1);
-		yLocal = y & (ChunkSizeY - 1);
-		zLocal = z & (ChunkSizeZ - 1);
-	};
-	void makeChunkCoords(wCoord x, wCoord& xChunk, wCoord y, wCoord& yChunk, wCoord z, wCoord& zChunk)
-	{
-		xChunk = ((x < 0) ? (x - (ChunkSizeX - 1)) : x) / ChunkSizeX;
-		yChunk = ((y < 0) ? (y - (ChunkSizeY - 1)) : y) / ChunkSizeY;
-		zChunk = ((z < 0) ? (z - (ChunkSizeZ - 1)) : z) / ChunkSizeZ;
-	};
-
 	void registerChunkBody(Chunk& curChunk);
 	void deregisterChunkBody(Chunk& curChunk);
 
