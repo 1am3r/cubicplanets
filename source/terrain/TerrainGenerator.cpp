@@ -100,7 +100,7 @@ void TerrainGenerator::generateHeightMap(GameWorld::ChunkPillar& pillar, wCoord 
 			if (height > maxY) maxY = height;
 			if (height < minY) minY = height;
 
-			pillar.heightMap[xi][zi] = height;
+			pillar.heightMap[GameWorld::getHeightMapIndex(xi, zi)] = height;
 		}
 	}
 
@@ -126,7 +126,7 @@ GameWorld::Chunk* TerrainGenerator::fillChunk(GameWorld::ChunkPillar& pillar, wC
 
 		for (int xi = 0; xi < GameWorld::ChunkSizeX; xi++) {
 			for (int zi = 0; zi < GameWorld::ChunkSizeZ; zi++) {
-				wCoord height = pillar.heightMap[xi][zi];
+				wCoord height = pillar.heightMap[GameWorld::getHeightMapIndex(xi, zi)];
 				height -= yPos * GameWorld::ChunkSizeY;
 
 				if (height > 0) {

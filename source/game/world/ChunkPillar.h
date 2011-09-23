@@ -22,7 +22,7 @@ public:
 	wCoord maxY, minY;
 	bool heightMapSet;
 
-	std::array<std::array<wCoord, ChunkSizeZ>, ChunkSizeX> heightMap;
+	std::array<wCoord, ChunkSizeZ * ChunkSizeX> heightMap;
 
 public:
 	ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos);

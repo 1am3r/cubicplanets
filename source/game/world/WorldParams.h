@@ -56,6 +56,8 @@ namespace GameWorld {
 				static_cast<uint8_t>(positiveMod(y, ChunksPerPillar)));
 	};
 	static inline uint32_t convertChunkPosKeyToIndex(uint32_t key) { return getChunkIndexLocal(key >> 24, (key >> 16) & 0xFF, key & 0xFF); };
+
+	static inline size_t getHeightMapIndex(wCoord x, wCoord z) { return (x * ChunkSizeZ + z); };
 };
 
 #endif // _WORLDPARAMS_H_

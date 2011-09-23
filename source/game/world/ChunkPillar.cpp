@@ -22,18 +22,14 @@ ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::is
 	: mWRegion(wRegion), mX(xPos), mZ(zPos), heightMapSet(false), mModified(false)
 {
 	mChunks.fill(static_cast<Chunk*>(0));
-	for (auto xIt = heightMap.begin(); xIt != heightMap.end(); ++xIt) {
-		data.read(reinterpret_cast<char*>((*xIt).data()), (*xIt).size() * sizeof(heightMap[0][0]));
-	}
+	data.read(reinterpret_cast<char*>(heightMap.data()), heightMap.size() * sizeof(heightMap[0]));
 }
 
 
 void ChunkPillar::saveToStream(std::ostream& pillarData)
 {
 	// Save the heightmap
-	for (auto xIt = heightMap.begin(); xIt != heightMap.end(); ++xIt) {
-		pillarData.write(reinterpret_cast<char*>((*xIt).data()), (*xIt).size() * sizeof(heightMap[0][0]));
-	}
+	pillarData.write(reinterpret_cast<char*>(heightMap.data()), heightMap.size() * sizeof(heightMap[0]));
 }
 
 void ChunkPillar::unloadChunks()

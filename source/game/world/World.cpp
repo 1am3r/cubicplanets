@@ -25,7 +25,7 @@ World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 
 	mChunkStore = new ChunkStorage(*this);
 
-	mRange = 2;
+	mRange = 4;
 	mDimension = (mRange * 2 + 1);
 
 	mChunks = new Chunk*[mDimension * mDimension * mDimension];
