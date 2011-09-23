@@ -4,7 +4,6 @@
 
 #include "game/input/InputHandler.h"
 #include "game/world/World.h"
-#include "game/world/Chunk.h"
 #include "game/gui/McsHudGui.h"
 
 MscCreativeMode::MscCreativeMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, InputHandler* input) :
@@ -64,16 +63,8 @@ void MscCreativeMode::start()
 {
 	mLevel = new GameWorld::World(23L, mSceneMgr);
 	mLevel->prepareRegion(0, 0, 0);
-
-	GameWorld::Chunk* startChunk = mLevel->getChunk(0, 0, 0);
-	if (!startChunk){
-		exit(0);
-	}
-
-	Ogre::Real startPos = static_cast<Ogre::Real> (startChunk->getHighestCube(0, 0));
-	startPos += 2.0;
-
-	mCamNode->setPosition(Ogre::Real(0.5), startPos, Ogre::Real(0.5));
+	
+	mCamNode->setPosition(Ogre::Real(0.5f), Ogre::Real(10.0f), Ogre::Real(0.5f));
 	mCamNode->setOrientation(Ogre::Quaternion::IDENTITY);
 
 	MscGameMode::initCharacter();

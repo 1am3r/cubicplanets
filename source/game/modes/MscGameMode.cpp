@@ -2,7 +2,6 @@
 #include "MscGameMode.h"
 
 #include "game/world/World.h"
-#include "game/world/Chunk.h"
 #include "game/gui/McsHudGui.h"
 
 const Ogre::Degree MscGameMode::maxPitch = Ogre::Degree(90);

@@ -8,8 +8,10 @@
 #ifndef _TERRAINGENERATOR_H_
 #define _TERRAINGENERATOR_H_
 
-class GameWorld::Chunk;
-class GameWorld::ChunkPillar;
+namespace GameWorld {
+	class Chunk;
+	class ChunkPillar;
+}
 
 class TerrainGenerator
 {
