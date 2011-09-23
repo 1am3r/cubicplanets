@@ -1,5 +1,5 @@
-
 #include <cstdint>
+#include <array>
 
 #include "game/types.h"
 #include "game/world/WorldParams.h"
@@ -22,6 +22,7 @@ public:
 	ChunkStorage(World& level);
 	~ChunkStorage();
 
+	void shutdown();
 
 	Chunk* getChunkAbs(wCoord x, wCoord y, wCoord z);
 	Chunk* getChunkLocal(wCoord x, wCoord y, wCoord z); //{ return getChunkAbs(x * ChunkSizeX, y * ChunkSizeY, z * ChunkSizeZ); };
@@ -47,7 +48,7 @@ private:
 	World& mLevel;
 	TerrainGenerator* mTerraGen;
 
-	WorldRegion* mRegionMap[ActiveRegions * ActiveRegions];
+	std::array<WorldRegion*, ActiveRegions * ActiveRegions> mRegionMap;
 };
 
 };

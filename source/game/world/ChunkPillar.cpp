@@ -32,6 +32,15 @@ void ChunkPillar::saveToStream(std::ostream& pillarData)
 	pillarData.write(reinterpret_cast<char*>(heightMap.data()), heightMap.size() * sizeof(heightMap[0]));
 }
 
+void ChunkPillar::getChunksToSave(std::vector<Chunk*>& chunksToSave)
+{
+	for (auto chunkIt = mChunks.begin(); chunkIt != mChunks.end(); ++chunkIt) {
+		if (*chunkIt != 0 && (*chunkIt)->isModified()) {
+			chunksToSave.push_back(*chunkIt);
+		}
+	}
+}
+
 void ChunkPillar::unloadChunks()
 {
 	for (int i = 0; i < ChunksPerPillar; i++) {
@@ -48,15 +57,19 @@ Chunk* ChunkPillar::getChunk(uint8_t y)
 	Chunk* curChunk = mChunks[index];
 	if (curChunk == 0) {
 		wCoord yAbs = (y > ChunksAboveZero ? y - ChunksPerPillar : y);
-		//TODO: load chunk if saved
-		//curChunk = loadChunk();
+		curChunk = mWRegion.loadChunk(mX, yAbs, mZ);
 		if (curChunk == 0) {
-			curChunk = mWRegion.getTerraGen().generateChunk(*this, mX, yAbs, mZ);
+			curChunk = createChunk(yAbs);
 		}
 		mChunks[index] = curChunk;
 	}	
 
 	return curChunk;
 };
+
+Chunk* ChunkPillar::createChunk(wCoord yAbs)
+{
+	return mWRegion.getTerraGen().generateChunk(*this, mX, yAbs, mZ);
+}
 
 };

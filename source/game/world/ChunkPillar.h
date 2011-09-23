@@ -30,6 +30,7 @@ public:
 	~ChunkPillar() { unloadChunks(); };
 
 	void saveToStream(std::ostream& pillarData);
+	void getChunksToSave(std::vector<Chunk*>& chunksToSave);
 
 	void unloadChunks();
 
@@ -38,6 +39,7 @@ public:
 private:
 	static size_t getChunkIndex(uint8_t y) { return y; };
 	Chunk* getChunk(uint8_t y);
+	Chunk* createChunk(wCoord y);
 
 private:
 	std::array<Chunk*, ChunksPerPillar> mChunks;

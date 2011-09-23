@@ -81,8 +81,10 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
     if(mWindow->isClosed())
         return false;
  
-	if (mShutDown == true)
+	if (mShutDown == true) {
+		mLevel->shutdown();
 		return false;
+	}
 
 	mInput->frameUpdate();
 

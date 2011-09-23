@@ -289,6 +289,13 @@ void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
 	std::vector<Chunk*> chunksToSave;
 	for (auto pillarIt = mPillars.begin(); pillarIt != mPillars.end(); ++pillarIt) {
 		
+		if (*pillarIt == 0) {
+			continue;
+		}
+
+		// Get all chunks to save from the pillar
+		(*pillarIt)->getChunksToSave(chunksToSave);
+
 		for (size_t numChunks = 0; numChunks < chunksToSave.size(); ++numChunks) {
 			Chunk* curChunk = chunksToSave[numChunks];
 			std::ostringstream chunkData;
@@ -404,11 +411,10 @@ ChunkPillar& WorldRegion::getPillar(uint8_t x, uint8_t z)
 
 	curPillar = mPillars[index];
 	if (curPillar == 0) {
-		if  (mPillarOffsets[index] != 0) {
-			// Load the pillar from file
-			curPillar = loadChunkPillar(x, z);
-		} else {
-			// No pillar there, make a new one
+		// Load the pillar from file
+		curPillar = loadChunkPillar(x, z);
+		if (curPillar == 0) {
+			// Saved pillar was corrupted or not generated, create a new one
 			curPillar = createChunkPillar(x, z);
 		}
 		mPillars[index] = curPillar;
@@ -428,10 +434,7 @@ ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
 {
 	uint32_t index = getPillarIndexLocal(x, z);
 	uint32_t offset = mPillarOffsets[index];
-	if (offset == 0) {
-		// Pillar is not generated yet
-		return 0;
-	} else {
+	if (offset != 0) {
 		try {
 			// Pillar is saved, load it
 			uint32_t sector = getSectorFromOffset(offset);
@@ -450,7 +453,37 @@ ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
 			return 0;
 		}
 	}
+	
+	// Pillar is not generated yet
+	return 0;
+}
 
+Chunk* WorldRegion::loadChunk(wCoord x, wCoord y, wCoord z)
+{
+	size_t index = getChunkIndex(x, y, z);
+	uint32_t offset = mChunkOffsets[index];
+	if (offset != 0) {
+		try {
+			// Chunk is saved, load it
+			uint32_t sector = getSectorFromOffset(offset);
+			uint8_t sectorSize = getSectorSizeFromOffset(offset);
+			bio::gzip_decompressor gzDecomp;
+			bio::filtering_istream gzIn;
+			gzIn.push(gzDecomp);
+			mChunkFile.seekg(sector * ChunkFileSectorSize);
+			gzIn.push(mChunkFile);
+			return new Chunk(mWorld, x, y, z, gzIn);
+		}
+		catch (bio::gzip_error& e)
+		{
+			// Something was wrong with this chunk, ignore it
+			std::cout << "WorldRegion::loadChunk: gzip exception: " << e.what() << std::endl;
+			return 0;
+		}
+	}
+
+	// Chunk not yet generated
+	return 0;
 }
 
 };

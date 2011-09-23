@@ -94,6 +94,11 @@ World::~World(void)
 }
 
 
+void World::shutdown() 
+{
+	mChunkStore->shutdown();
+}
+
 void World::UpdateCachedChunks(wCoord xDiff, wCoord yDiff, wCoord zDiff)
 {
 	for (wCoord x = abs(xDiff); x > 0; x--) {

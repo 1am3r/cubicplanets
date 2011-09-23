@@ -22,6 +22,7 @@ public:
 	// Methods
 public:
 	Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos);
+	Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos, std::istream& data);
 	~Chunk();
 
 	// Saving
@@ -34,7 +35,7 @@ public:
 	uint32_t getHighestCube(uint8_t x, uint8_t z);
 
 	void fillBlocks(uint8_t cubeType) { blocks.fill(cubeType); };
-	void setEmpty() { /* Do we need to do anything here? */ };
+	void setEmpty() { isEmpty = true; /* Do we need to do more here? */ };
 
 	void setCubeTypeLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType) { blocks[getCubeIndex(x, y, z)] = cubeType; };
 	void setCubeDataLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeData) { blocksData[getCubeIndex(x, y, z)] = cubeData; };
@@ -42,16 +43,11 @@ public:
 	uint8_t getCubeDataLocal(uint8_t x, uint8_t y, uint8_t z) { return blocksData[getCubeIndex(x, y, z)]; };
 
 	void setHighestCube(uint16_t height) { mHighestCube = height; };
-	//void setCubeType(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType)
-	//{
-	//	blocks[x][z][y] = cubeType;
-	//	mIsModified = true;
-	//	update();
-	//};
 
 	bool isChunkActive() { return mSceneAttached; };
 
 	void setModified() { mIsModified = true; };
+	bool isModified() { return mIsModified; };
 	
 	// update after block modification
 	void update();

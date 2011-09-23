@@ -15,6 +15,26 @@ Chunk::Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos)
 	  mNumVertices(0), mNumIndices(0), mVertices(0), mIndices(0), mIsModified(true), mVertexBufferCreated(false)
 {
 	initChunk();
+
+	blocks.fill(0);
+	blocksData.fill(0);
+}
+
+Chunk::Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos, std::istream& data)
+	: mLevel(world), mStorage(world.getStorage()), mChunkEntity(0), mChunkScene(0), mSceneAttached(false), mMeshGenerated(false),
+	  mPhysicsIvArray(0), mPhysicsShape(0), mPhysicsBody(0), mPhysicsAttached(false),
+	  mX(xPos), mY(yPos), mZ(zPos), mHighestCube(ChunkSizeY - 1), isEmpty(false),
+	  mNumVertices(0), mNumIndices(0), mVertices(0), mIndices(0), mIsModified(true), mVertexBufferCreated(false)
+{
+	initChunk();
+
+	data.read(reinterpret_cast<char*>(&mHighestCube), sizeof(mHighestCube));
+	char empty = 0;
+	data.read(&empty, sizeof(empty));
+	isEmpty = (empty != 0);
+
+	data.read(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(blocks[0]));
+	data.read(reinterpret_cast<char*>(blocksData.data()), blocksData.size() * sizeof(blocksData[0]));
 }
 
 Chunk::~Chunk()
@@ -37,14 +57,16 @@ void Chunk::initChunk()
 	std::ostringstream chunkNameStream;
 	chunkNameStream << "chunk" << mX << "_" << mY << "_" << mZ;
 	mChunkName.assign(chunkNameStream.str()); 
-
-	blocks.fill(0);
-	blocksData.fill(0);
 }
 
 void Chunk::saveToStream(std::ostream& data)
 {
+	data.write(reinterpret_cast<char*>(&mHighestCube), sizeof(mHighestCube));
+	char empty = static_cast<char>(isEmpty);
+	data.write(&empty, sizeof(empty));
 
+	data.write(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(blocks[0]));
+	data.write(reinterpret_cast<char*>(blocksData.data()), blocksData.size() * sizeof(blocksData[0]));
 }
 
 

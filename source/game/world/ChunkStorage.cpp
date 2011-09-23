@@ -12,7 +12,7 @@ namespace GameWorld {
 ChunkStorage::ChunkStorage(World& level) :
 	mLevel(level), mTerraGen(0)
 {
-	std::memset(mRegionMap, 0, sizeof(mRegionMap));
+	mRegionMap.fill(static_cast<WorldRegion*>(0));
 	
 	mTerraGen = new TerrainGenerator(mLevel);
 }
@@ -22,6 +22,16 @@ ChunkStorage::~ChunkStorage()
 {
 	if (mTerraGen) {
 		delete mTerraGen;
+	}
+}
+
+
+void ChunkStorage::shutdown()
+{
+	for (auto regionIt = mRegionMap.begin(); regionIt != mRegionMap.end(); ++regionIt) {
+		if (*regionIt != 0) {
+			(*regionIt)->saveToDisk();
+		}
 	}
 }
 

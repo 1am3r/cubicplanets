@@ -26,6 +26,8 @@ public:
 	World(uint32_t seed, Ogre::SceneManager* sceneMgr);
 	~World();
 
+	void shutdown();
+
 	void update(const Ogre::FrameEvent& evt);
 	void UpdateCachedChunks(wCoord xDiff, wCoord yDiff, wCoord zDiff);
 

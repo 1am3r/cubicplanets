@@ -35,9 +35,12 @@ class ChunkStorage;
 class WorldRegion
 {
 	friend class ChunkStorage;
+	friend class ChunkPillar;
 public:
 	WorldRegion(World& world, ChunkStorage& store, wCoord x, wCoord z);
 	~WorldRegion();
+
+	void saveToDisk() { saveToStream(mRegionFile, mChunkFile); };
 
 	wCoord getXPos() const { return xPos; };
 	wCoord getZPos() const { return zPos; };
@@ -83,6 +86,8 @@ private:
 
 	uint32_t findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t neededSize);
 	uint32_t findFreeChunkSectorOffset(Chunk* chunk, uint32_t neededSize);
+
+	Chunk* loadChunk(wCoord x, wCoord y, wCoord z);
 
 	inline uint32_t getRegionSectorCount() { return (mRegionFileSize / RegionFileSectorSize) + 1; };
 	inline uint32_t getChunkSectorCount()  { return (mChunkFileSize / ChunkFileSectorSize) + 1; };
