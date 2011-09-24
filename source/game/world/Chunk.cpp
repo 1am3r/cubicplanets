@@ -11,7 +11,7 @@ namespace GameWorld {
 Chunk::Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos)
 	: mLevel(world), mStorage(world.getStorage()), mChunkEntity(0), mChunkScene(0), mSceneAttached(false), mMeshGenerated(false),
 	  mPhysicsIvArray(0), mPhysicsShape(0), mPhysicsBody(0), mPhysicsAttached(false),
-	  mX(xPos), mY(yPos), mZ(zPos), mHighestCube(ChunkSizeY - 1), isEmpty(false),
+	  mX(xPos), mY(yPos), mZ(zPos), mHighestCube(ChunkSizeY - 1), isEmpty(false), isSaved(false),
 	  mNumVertices(0), mNumIndices(0), mVertices(0), mIndices(0), mIsModified(true), mVertexBufferCreated(false)
 {
 	initChunk();
@@ -23,7 +23,7 @@ Chunk::Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos)
 Chunk::Chunk(World& world, wCoord xPos, wCoord yPos, wCoord zPos, std::istream& data)
 	: mLevel(world), mStorage(world.getStorage()), mChunkEntity(0), mChunkScene(0), mSceneAttached(false), mMeshGenerated(false),
 	  mPhysicsIvArray(0), mPhysicsShape(0), mPhysicsBody(0), mPhysicsAttached(false),
-	  mX(xPos), mY(yPos), mZ(zPos), mHighestCube(ChunkSizeY - 1), isEmpty(false),
+	  mX(xPos), mY(yPos), mZ(zPos), mHighestCube(ChunkSizeY - 1), isEmpty(false), isSaved(true),
 	  mNumVertices(0), mNumIndices(0), mVertices(0), mIndices(0), mIsModified(true), mVertexBufferCreated(false)
 {
 	initChunk();
@@ -67,6 +67,8 @@ void Chunk::saveToStream(std::ostream& data)
 
 	data.write(reinterpret_cast<char*>(blocks.data()), blocks.size() * sizeof(blocks[0]));
 	data.write(reinterpret_cast<char*>(blocksData.data()), blocksData.size() * sizeof(blocksData[0]));
+
+	isSaved = true;
 }
 
 

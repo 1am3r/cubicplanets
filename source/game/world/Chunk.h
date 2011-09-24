@@ -37,8 +37,8 @@ public:
 	void fillBlocks(uint8_t cubeType) { blocks.fill(cubeType); };
 	void setEmpty() { isEmpty = true; /* Do we need to do more here? */ };
 
-	void setCubeTypeLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType) { blocks[getCubeIndex(x, y, z)] = cubeType; };
-	void setCubeDataLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeData) { blocksData[getCubeIndex(x, y, z)] = cubeData; };
+	void setCubeTypeLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeType) { blocks[getCubeIndex(x, y, z)] = cubeType; isSaved = false; };
+	void setCubeDataLocal(uint8_t x, uint8_t y, uint8_t z, uint8_t cubeData) { blocksData[getCubeIndex(x, y, z)] = cubeData; isSaved = false; };
 	uint8_t getCubeTypeLocal(uint8_t x, uint8_t y, uint8_t z) { return blocks[getCubeIndex(x, y, z)]; };
 	uint8_t getCubeDataLocal(uint8_t x, uint8_t y, uint8_t z) { return blocksData[getCubeIndex(x, y, z)]; };
 
@@ -49,6 +49,8 @@ public:
 	void setModified() { mIsModified = true; };
 	bool isModified() { return mIsModified; };
 	
+	bool needsSaving() { return !isSaved; };
+
 	// update after block modification
 	void update();
 
@@ -66,6 +68,7 @@ private:
 	uint16_t mHighestCube;
 
 	bool isEmpty;
+	bool isSaved;
 
 	static size_t getCubeIndex(uint8_t x, uint8_t y, uint8_t z) { return ((x * ChunkSizeZ + z) * ChunkSizeY) + y; };
 	

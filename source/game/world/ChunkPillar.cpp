@@ -35,7 +35,7 @@ void ChunkPillar::saveToStream(std::ostream& pillarData)
 void ChunkPillar::getChunksToSave(std::vector<Chunk*>& chunksToSave)
 {
 	for (auto chunkIt = mChunks.begin(); chunkIt != mChunks.end(); ++chunkIt) {
-		if (*chunkIt != 0 && (*chunkIt)->isModified()) {
+		if (*chunkIt != 0 && (*chunkIt)->needsSaving()) {
 			chunksToSave.push_back(*chunkIt);
 		}
 	}

@@ -126,20 +126,14 @@ void WorldRegion::createChunksFile()
 	mChunkOffsets.clear();
 	mChunkFile.seekp(0);
 
-	bio::gzip_compressor gzComp;
-	bio::filtering_ostream gzOut;
-	gzOut.push(gzComp);
-	gzOut.push(mChunkFile);
-
 	uint32_t zero = 0;
 	for (uint32_t i = 0; i < ChunksPerRegion; ++i) {
-		gzOut.write(reinterpret_cast<char*>(&zero), sizeof(zero));
+		mChunkFile.write(reinterpret_cast<char*>(&zero), sizeof(zero));
 	}
-	gzOut.pop();
 
 	// Mark header sectors as used
 	uint32_t headerSize = static_cast<uint32_t>(mChunkFile.tellp());
-	mChunkFileHeaderSectors = (headerSize / ChunkFileSectorSize) + 1;
+	mChunkFileHeaderSectors = ((headerSize - 1) / ChunkFileSectorSize) + 1;
 	for (uint8_t i = 0; i < mChunkFileHeaderSectors; ++i) {
 		mFreeChunkSectors[i] = false;
 	}
@@ -153,13 +147,9 @@ void WorldRegion::loadChunksFile()
 	mFreeChunkSectors.resize(chunkSectors, true);
 	mChunkFile.seekg(0);
 	
-	bio::gzip_decompressor gzDecomp;
-	bio::filtering_istream gzIn;
-	gzIn.push(gzDecomp);
-	gzIn.push(mChunkFile);
 	for (uint32_t i = 0; i < ChunksPerRegion; ++i) {
 		uint32_t offset;
-		gzIn.read(reinterpret_cast<char*>(&offset), sizeof(offset));
+		mChunkFile.read(reinterpret_cast<char*>(&offset), sizeof(offset));
 		if (offset != 0) {
 			// Insert offset in map
 			mChunkOffsets[i] = offset;
@@ -167,16 +157,15 @@ void WorldRegion::loadChunksFile()
 			// Mark sectors as used
 			uint32_t sector = getSectorFromOffset(offset);
 			uint8_t numSectors = getSectorSizeFromOffset(offset); 
-			for (uint8_t j = sector; j < sector + numSectors; ++j) {
+			for (uint32_t j = sector; j < sector + numSectors; ++j) {
 				mFreeChunkSectors[j] = false;
 			}
 		}
 	}
-	gzIn.pop();
 	
 	// Mark header sectors as used
 	uint32_t headerSize = static_cast<uint32_t>(mChunkFile.tellg());
-	mChunkFileHeaderSectors = (headerSize / ChunkFileSectorSize) + 1;
+	mChunkFileHeaderSectors = ((headerSize - 1) / ChunkFileSectorSize) + 1;
 	for (uint8_t i = 0; i < mChunkFileHeaderSectors; ++i) {
 		mFreeChunkSectors[i] = false;
 	}
@@ -280,6 +269,8 @@ uint32_t WorldRegion::findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t n
 	return offset;
 }
 
+std::fstream log("logging.log", std::ios::trunc | std::ios::out);
+
 void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
 {
 	// Save the chunks
@@ -287,6 +278,7 @@ void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
 	bio::filtering_ostream gzOut;
 	gzOut.push(gzComp);
 	std::vector<Chunk*> chunksToSave;
+	
 	for (auto pillarIt = mPillars.begin(); pillarIt != mPillars.end(); ++pillarIt) {
 		
 		if (*pillarIt == 0) {
@@ -304,6 +296,7 @@ void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
 			gzOut.pop();
 
 			uint32_t chunkDataSize = static_cast<uint32_t>(chunkData.str().size());
+			log << "Chunk x:" << (int) curChunk->mX << " y:" << (int) curChunk->mY << " z:" << (int) curChunk->mZ << " Size: " << (unsigned int) chunkDataSize << std::endl;
 			uint32_t sectorOffset = findFreeChunkSectorOffset(curChunk, chunkDataSize);
 			if (sectorOffset == 0) {
 				throw std::exception("Couldn't find big enough free sector in ChunkFile!");
@@ -319,8 +312,10 @@ void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
 
 	// Save ChunkFile Header
 	for (auto chunkIt = mChunkOffsets.begin(); chunkIt != mChunkOffsets.end(); ++chunkIt) {
-		chunksDataStream.seekp(convertChunkPosKeyToIndex(chunkIt->first));
-		chunksDataStream.write(reinterpret_cast<char*>(&chunkIt->second), sizeof(chunkIt->second));
+		if (chunkIt->second > 0) {
+			chunksDataStream.seekp(chunkIt->first * sizeof(chunkIt->second));
+			chunksDataStream.write(reinterpret_cast<char*>(&chunkIt->second), sizeof(chunkIt->second));
+		}
 	}
 }
 
@@ -444,7 +439,10 @@ ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
 			gzIn.push(gzDecomp);
 			mRegionFile.seekg(sector * RegionFileSectorSize);
 			gzIn.push(mRegionFile);
-			return new ChunkPillar(*this, x, z, gzIn);
+
+			wCoord xAbs = xPos * RegionPillarsXZ + x;
+			wCoord zAbs = zPos * RegionPillarsXZ + z;
+			return new ChunkPillar(*this, xAbs, zAbs, gzIn);
 		}
 		catch (bio::gzip_error& e)
 		{
