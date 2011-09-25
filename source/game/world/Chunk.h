@@ -46,7 +46,7 @@ protected:
 	Chunk(wCoord xPos, wCoord yPos, wCoord zPos);
 	virtual ~Chunk() {};
 
-	virtual uint8_t* getCubeArray() { return 0; };
+	virtual uint8_t* getCubeArray() { return emptyBlocks.data(); };
 
 	Ogre::String& getChunkName(){ return mChunkName; };
 	uint32_t getHighestCube(uint8_t x, uint8_t z) { return 0; };
@@ -58,6 +58,10 @@ protected:
 
 protected:
 	Ogre::String				mChunkName;
+
+private:
+	static std::array<uint8_t, ChunkSizeX * ChunkSizeY * ChunkSizeZ> emptyBlocks;
+	static bool emptyBlocksFilled;
 };
 
 };

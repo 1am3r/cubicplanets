@@ -64,8 +64,14 @@ Chunk* ChunkPillar::getChunkLocal(wCoord y)
 		wCoord yAbs = (y > ChunksAboveZero ? y - ChunksPerPillar : y);
 		curChunk = mWRegion.loadChunk(*this, mX, yAbs, mZ);
 		if (curChunk == 0) {
-			curChunk = createChunk(yAbs);
-			mWRegion.getTerraGen().fillChunk(*this, *static_cast<ChunkBase*>(curChunk));
+			if (maxY > yAbs * ChunkSizeY) {
+				// Chunk has blocks
+				curChunk = createChunk(yAbs);
+				mWRegion.getTerraGen().fillChunk(*this, *static_cast<ChunkBase*>(curChunk));
+			} else {
+				// Chunk is empty
+				curChunk = createChunkEmpty(yAbs);
+			}
 		}
 		mChunks[index] = curChunk;
 	}	
