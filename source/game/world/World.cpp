@@ -139,12 +139,11 @@ void World::updateCachedChunk(wCoord x, wCoord y, wCoord z)
 {
 	Chunk* curChunk = getCachedChunk(x, y, z);
 	if (curChunk != 0 && curChunk->isChunkActive()) {
-		curChunk->deactivateEntity();
+		curChunk->deactivateChunk();
 	}
 	curChunk = mChunkStore->getChunkLocal(x, y, z);
 	setCachedChunk(x, y, z, curChunk);
-	curChunk->activateEntity();
-	curChunk->activatePhysicsBody();
+	curChunk->activateChunk();
 }
 
 Chunk* World::getCachedChunk(wCoord x, wCoord y, wCoord z)

@@ -24,6 +24,7 @@
 
 
 // Ogre includes
+#include <Ogre.h>
 #include <OgreRoot.h>
 #include <OgreException.h>
 #include <OgreConfigFile.h>

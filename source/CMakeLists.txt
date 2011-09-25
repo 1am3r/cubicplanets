@@ -13,6 +13,7 @@ SET( ${TARGET_NAME}_HEADER
   game/modes/MscCreativeMode.h
   game/modes/MscGameMode.h
   game/world/Chunk.h
+  game/world/ChunkBase.h
   game/world/ChunkPillar.h
   game/world/ChunkStorage.h
   game/world/World.h
@@ -41,6 +42,7 @@ SET( ${TARGET_NAME}_SOURCE
   game/modes/MscCreativeMode.cpp
   game/modes/MscGameMode.cpp
   game/world/Chunk.cpp
+  game/world/ChunkBase.cpp
   game/world/ChunkPillar.cpp
   game/world/ChunkStorage.cpp
   game/world/World.cpp

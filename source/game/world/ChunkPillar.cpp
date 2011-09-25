@@ -11,15 +11,15 @@
 
 namespace GameWorld {
 
-ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos)
-	: mWRegion(wRegion), mX(xPos), mZ(zPos), heightMapSet(false), mModified(true)
+ChunkPillar::ChunkPillar(World& world, WorldRegion& wRegion, wCoord xPos, wCoord zPos)
+	: mWorld(world), mWRegion(wRegion), mX(xPos), mZ(zPos), heightMapSet(false), mModified(true)
 {
 	mChunks.fill(static_cast<Chunk*>(0));
 	mWRegion.getTerraGen().setHeightMap(*this, mX, mZ);
 }
 
-ChunkPillar::ChunkPillar(WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::istream& data)
-	: mWRegion(wRegion), mX(xPos), mZ(zPos), heightMapSet(false), mModified(false)
+ChunkPillar::ChunkPillar(World& world, WorldRegion& wRegion, wCoord xPos, wCoord zPos, std::istream& data)
+	: mWorld(world), mWRegion(wRegion), mX(xPos), mZ(zPos), heightMapSet(false), mModified(false)
 {
 	mChunks.fill(static_cast<Chunk*>(0));
 	data.read(reinterpret_cast<char*>(heightMap.data()), heightMap.size() * sizeof(heightMap[0]));
@@ -51,25 +51,26 @@ void ChunkPillar::unloadChunks()
 	}
 }
 
-Chunk* ChunkPillar::getChunk(uint8_t y)
+Chunk* ChunkPillar::getChunkAbs(wCoord y)
+{
+	return getChunkLocal(getChunkIndexY(y));
+}
+
+Chunk* ChunkPillar::getChunkLocal(wCoord y)
 {
 	size_t index = getChunkIndex(y);
 	Chunk* curChunk = mChunks[index];
 	if (curChunk == 0) {
 		wCoord yAbs = (y > ChunksAboveZero ? y - ChunksPerPillar : y);
-		curChunk = mWRegion.loadChunk(mX, yAbs, mZ);
+		curChunk = mWRegion.loadChunk(*this, mX, yAbs, mZ);
 		if (curChunk == 0) {
 			curChunk = createChunk(yAbs);
+			mWRegion.getTerraGen().fillChunk(*this, *static_cast<ChunkBase*>(curChunk));
 		}
 		mChunks[index] = curChunk;
 	}	
 
 	return curChunk;
 };
-
-Chunk* ChunkPillar::createChunk(wCoord yAbs)
-{
-	return mWRegion.getTerraGen().generateChunk(*this, mX, yAbs, mZ);
-}
 
 };

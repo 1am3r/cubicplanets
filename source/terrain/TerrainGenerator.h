@@ -9,7 +9,7 @@
 #define _TERRAINGENERATOR_H_
 
 namespace GameWorld {
-	class Chunk;
+	class ChunkBase;
 	class ChunkPillar;
 }
 
@@ -20,12 +20,11 @@ public:
 	~TerrainGenerator();
 
 	void setHeightMap(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord zPos);
-	GameWorld::Chunk* generateChunk(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord yPos, wCoord zPos);
+	void fillChunk(GameWorld::ChunkPillar& pillar, GameWorld::ChunkBase& chunk);
 
 private:
 	void generateHeightMap(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord zPos);
-	GameWorld::Chunk* fillChunk(GameWorld::ChunkPillar& pillar, wCoord yPos);
-
+	
 private:
 	GameWorld::World& mWorld;
 	Noise2D* mMountainsNoise;

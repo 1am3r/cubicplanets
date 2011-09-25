@@ -37,7 +37,7 @@ void ChunkStorage::shutdown()
 
 Chunk* ChunkStorage::getChunkAbs(wCoord x, wCoord y, wCoord z)
 {
-	return getPillarAbs(x, z).getChunk(getChunkIndexY(y));
+	return getPillarAbs(x, z).getChunkAbs(y);
 }
 
 ChunkPillar& ChunkStorage::getPillarAbs(wCoord x, wCoord z)
@@ -47,7 +47,7 @@ ChunkPillar& ChunkStorage::getPillarAbs(wCoord x, wCoord z)
 
 Chunk* ChunkStorage::getChunkLocal(wCoord x, wCoord y, wCoord z)
 {
-	return getPillarLocal(x, z).getChunk(getChunkIndexYLocal(y));
+	return getPillarLocal(x, z).getChunkLocal(getChunkIndexYLocal(y));
 }
 
 ChunkPillar& ChunkStorage::getPillarLocal(wCoord x, wCoord z)
@@ -75,14 +75,14 @@ WorldRegion& ChunkStorage::getRegion(wCoord x, wCoord z)
 
 void ChunkStorage::updateChunkLocal(wCoord x, wCoord y, wCoord z)
 {
-	updateChunkAbs(x * ChunkSizeX, y * ChunkSizeY, z * ChunkSizeZ);
+	Chunk* curChunk = getChunkLocal(x, y, z);
+	curChunk->update(true);
 }
 
 void ChunkStorage::updateChunkAbs(wCoord x, wCoord y, wCoord z)
 {
 	Chunk* curChunk = getChunkAbs(x, y, z);
-	curChunk->setModified();
-	curChunk->update();
+	curChunk->update(true);
 }
 
 void ChunkStorage::cubeModifiedAbs(wCoord x, wCoord y, wCoord z)

@@ -3,7 +3,7 @@
 
 #include "game/types.h"
 #include "game/world/WorldParams.h"
-#include "game/world/Chunk.h"
+#include "game/world/ChunkPillar.h"
 
 #ifndef _CHUNKSTORAGE_H_
 #define _CHUNKSTORAGE_H_
@@ -14,7 +14,7 @@ namespace GameWorld {
 
 class World;
 class WorldRegion;
-class ChunkPillar;
+class Chunk;
 
 class ChunkStorage
 {
@@ -25,21 +25,20 @@ public:
 	void shutdown();
 
 	Chunk* getChunkAbs(wCoord x, wCoord y, wCoord z);
-	Chunk* getChunkLocal(wCoord x, wCoord y, wCoord z); //{ return getChunkAbs(x * ChunkSizeX, y * ChunkSizeY, z * ChunkSizeZ); };
+	Chunk* getChunkLocal(wCoord x, wCoord y, wCoord z);
+	ChunkPillar& getPillarAbs(wCoord x, wCoord z);
+	ChunkPillar& getPillarLocal(wCoord x, wCoord z);
 
-	uint8_t getCubeType(wCoord x, wCoord y, wCoord z) { return getChunkAbs(x, y, z)->getCubeTypeLocal(getCubeIndexXZ(x), getCubeIndexY(y), getCubeIndexXZ(z)); };
-	void    setCubeType(wCoord x, wCoord y, wCoord z, uint8_t type) { getChunkAbs(x, y, z)->setCubeTypeLocal(getCubeIndexXZ(x), getCubeIndexY(y), getCubeIndexXZ(z), type); };
-	uint8_t getCubeData(wCoord x, wCoord y, wCoord z) { return getChunkAbs(x, y, z)->getCubeDataLocal(getCubeIndexXZ(x), getCubeIndexY(y), getCubeIndexXZ(z)); };
-	void    setCubeData(wCoord x, wCoord y, wCoord z, uint8_t data) { getChunkAbs(x, y, z)->setCubeDataLocal(getCubeIndexXZ(x), getCubeIndexY(y), getCubeIndexXZ(z), data); };
+	uint8_t getCubeType(wCoord x, wCoord y, wCoord z) { return getPillarAbs(x, z).getCubeTypeAbs(x, y, z); };
+	void    setCubeType(wCoord x, wCoord y, wCoord z, uint8_t type) { getPillarAbs(x, z).setCubeTypeAbs(x, y, z, type); };
+	uint8_t getCubeData(wCoord x, wCoord y, wCoord z) { return getPillarAbs(x, z).getCubeDataAbs(x, y, z); };
+	void    setCubeData(wCoord x, wCoord y, wCoord z, uint8_t data) { getPillarAbs(x, z).setCubeDataAbs(x, y, z, data); };
 
 	void cubeModifiedAbs(wCoord x, wCoord y, wCoord z);
-	void cubeModifiedLocal(wCoord x, wCoord y, wCoord z) { return cubeModifiedAbs(x * ChunkSizeX, y * ChunkSizeY, z * ChunkSizeZ); };
 
 	TerrainGenerator& getTerraGen() { return *mTerraGen; };
 
 private:
-	ChunkPillar& getPillarAbs(wCoord x, wCoord z);
-	ChunkPillar& getPillarLocal(wCoord x, wCoord z);
 	WorldRegion& getRegion(wCoord x, wCoord z);
 	void updateChunkAbs(wCoord x, wCoord y, wCoord z);
 	void updateChunkLocal(wCoord x, wCoord y, wCoord z);

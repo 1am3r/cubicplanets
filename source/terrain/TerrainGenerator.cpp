@@ -42,17 +42,6 @@ void TerrainGenerator::setHeightMap(GameWorld::ChunkPillar& pillar, wCoord xPos,
 	}
 }
 
-GameWorld::Chunk* TerrainGenerator::generateChunk(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord yPos, wCoord zPos)
-{
-	if (!pillar.heightMapSet) {
-		setHeightMap(pillar, xPos, zPos);
-	}
-
-	GameWorld::Chunk* newChunk = fillChunk(pillar, yPos);
-
-	return newChunk;
-}
-
 void TerrainGenerator::generateHeightMap(GameWorld::ChunkPillar& pillar, wCoord xPos, wCoord zPos)
 {
 	//const uint16_t scale = (GameWorld::ChunkSizeY * 6) / 13;
@@ -109,40 +98,38 @@ void TerrainGenerator::generateHeightMap(GameWorld::ChunkPillar& pillar, wCoord 
 	pillar.heightMapSet = true;
 }
 
-GameWorld::Chunk* TerrainGenerator::fillChunk(GameWorld::ChunkPillar& pillar, wCoord yPos)
+void TerrainGenerator::fillChunk(GameWorld::ChunkPillar& pillar, GameWorld::ChunkBase& chunk)
 {
-	GameWorld::Chunk* newChunk = new GameWorld::Chunk(mWorld, pillar.mX, yPos, pillar.mZ);
 	uint16_t heighestCube = 0;
 
-	if (pillar.maxY < yPos * GameWorld::ChunkSizeY) {
-		newChunk->setEmpty();
-	} else if (pillar.minY >= (yPos + 1) * GameWorld::ChunkSizeY) {
+	if (pillar.maxY < chunk.mY * GameWorld::ChunkSizeY) {
+		chunk.setEmpty();
+	} else if (pillar.minY >= (chunk.mY + 1) * GameWorld::ChunkSizeY) {
 		heighestCube = GameWorld::ChunkSizeY - 1;
-		newChunk->fillBlocks(3);
+		chunk.fillBlocks(3);
 	} else {
-		heighestCube = pillar.maxY - (yPos * GameWorld::ChunkSizeY);
+		heighestCube = pillar.maxY - (chunk.mY * GameWorld::ChunkSizeY);
 		if (heighestCube < 0) heighestCube = 0;
 		if (heighestCube >= GameWorld::ChunkSizeY) heighestCube = GameWorld::ChunkSizeY - 1;
 
 		for (int xi = 0; xi < GameWorld::ChunkSizeX; xi++) {
 			for (int zi = 0; zi < GameWorld::ChunkSizeZ; zi++) {
 				wCoord height = pillar.heightMap[GameWorld::getHeightMapIndex(xi, zi)];
-				height -= yPos * GameWorld::ChunkSizeY;
+				height -= (chunk.mY * GameWorld::ChunkSizeY);
 
 				if (height > 0) {
 					if (height >= GameWorld::ChunkSizeY) height = GameWorld::ChunkSizeY - 1;
 
 					for (int yi = 0; yi <= height; yi++) {
-						newChunk->setCubeTypeLocal(xi, yi, zi, 3);
+						chunk.setCubeTypeLocal(xi, yi, zi, 3);
 					}
 
-					newChunk->setCubeTypeLocal(xi, height, zi, 2);
+					chunk.setCubeTypeLocal(xi, height, zi, 2);
 				}
 			}
 		}
 	}
 
-	newChunk->setHighestCube(heighestCube);
-	return newChunk;
+	chunk.setHighestCube(heighestCube);
 }
 

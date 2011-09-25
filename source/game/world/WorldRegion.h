@@ -87,7 +87,7 @@ private:
 	uint32_t findFreeRegionSectorOffset(ChunkPillar* pillar, uint32_t neededSize);
 	uint32_t findFreeChunkSectorOffset(Chunk* chunk, uint32_t neededSize);
 
-	Chunk* loadChunk(wCoord x, wCoord y, wCoord z);
+	Chunk* loadChunk(ChunkPillar& parent, wCoord x, wCoord y, wCoord z);
 
 	inline uint32_t getRegionSectorCount() { return (mRegionFileSize / RegionFileSectorSize) + 1; };
 	inline uint32_t getChunkSectorCount()  { return (mChunkFileSize / ChunkFileSectorSize) + 1; };

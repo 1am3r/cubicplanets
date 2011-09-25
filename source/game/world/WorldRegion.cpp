@@ -292,7 +292,11 @@ void WorldRegion::saveChunksToStream(std::ostream& chunksDataStream)
 			Chunk* curChunk = chunksToSave[numChunks];
 			std::ostringstream chunkData;
 			gzOut.push(chunkData);
-			curChunk->saveToStream(gzOut);
+			if (!curChunk->saveToStream(gzOut)) {
+				// No data or error occured, skip chunk
+				gzOut.pop();
+				continue;
+			}
 			gzOut.pop();
 
 			uint32_t chunkDataSize = static_cast<uint32_t>(chunkData.str().size());
@@ -422,7 +426,7 @@ ChunkPillar* WorldRegion::createChunkPillar(uint8_t x, uint8_t z)
 {
 	wCoord xAbs = xPos * RegionPillarsXZ + x;
 	wCoord zAbs = zPos * RegionPillarsXZ + z;
-	return new ChunkPillar(*this, xAbs, zAbs);
+	return new ChunkPillar(mWorld, *this, xAbs, zAbs);
 }
 
 ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
@@ -442,7 +446,7 @@ ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
 
 			wCoord xAbs = xPos * RegionPillarsXZ + x;
 			wCoord zAbs = zPos * RegionPillarsXZ + z;
-			return new ChunkPillar(*this, xAbs, zAbs, gzIn);
+			return new ChunkPillar(mWorld, *this, xAbs, zAbs, gzIn);
 		}
 		catch (bio::gzip_error& e)
 		{
@@ -456,7 +460,7 @@ ChunkPillar* WorldRegion::loadChunkPillar(uint8_t x, uint8_t z)
 	return 0;
 }
 
-Chunk* WorldRegion::loadChunk(wCoord x, wCoord y, wCoord z)
+Chunk* WorldRegion::loadChunk(ChunkPillar& parent, wCoord x, wCoord y, wCoord z)
 {
 	size_t index = getChunkIndex(x, y, z);
 	uint32_t offset = mChunkOffsets[index];
@@ -470,7 +474,7 @@ Chunk* WorldRegion::loadChunk(wCoord x, wCoord y, wCoord z)
 			gzIn.push(gzDecomp);
 			mChunkFile.seekg(sector * ChunkFileSectorSize);
 			gzIn.push(mChunkFile);
-			return new Chunk(mWorld, x, y, z, gzIn);
+			return parent.createChunkFromStream(y, gzIn);
 		}
 		catch (bio::gzip_error& e)
 		{
