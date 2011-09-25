@@ -6,8 +6,8 @@
 
 const Ogre::Degree MscGameMode::maxPitch = Ogre::Degree(90);
 
-MscGameMode::MscGameMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, InputHandler* input) :
-	mRoot(ogreRoot), mWindow(renderWindow), mInput(input),
+MscGameMode::MscGameMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, CEGUI::OgreRenderer* ceRenderer, InputHandler* input) :
+	mRoot(ogreRoot), mWindow(renderWindow), mCeRenderer(ceRenderer), mInput(input),
 	mRotate(Ogre::Real(0.13)), mMove(Ogre::Real(0.15)), mDirection(Ogre::Vector3::ZERO),
 	mLevel(0), mHud(0),
 	mDoJump(false), mShutDown(false)
@@ -46,7 +46,7 @@ void MscGameMode::init()
 	// Alter the camera aspect ratio to match the viewport
 	mCamera->setAspectRatio(Ogre::Real(vp->getActualWidth()) / Ogre::Real(vp->getActualHeight()));
 
-	mHud = new McsHudGui();
+	mHud = new McsHudGui(mRoot, mCeRenderer);
 	mHud->init();
 }
 

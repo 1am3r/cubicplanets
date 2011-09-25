@@ -21,6 +21,7 @@ private:
 private:
 	Ogre::Root* mRoot;
 	Ogre::RenderWindow* mWindow;
+	CEGUI::OgreRenderer* mRenderer;
 	InputHandler* mInput;
 };
 

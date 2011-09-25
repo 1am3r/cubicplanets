@@ -1,3 +1,4 @@
+#include <OGRE/Ogre.h>
 
 #ifndef _MCSHUDGUI_H_
 #define _MCSHUDGUI_H_
@@ -5,7 +6,7 @@
 class McsHudGui
 {
 public:
-	McsHudGui();
+	McsHudGui(Ogre::Root* ogreRoot, CEGUI::OgreRenderer* ceRenderer);
 	virtual ~McsHudGui();
 
 	virtual void update();
@@ -19,6 +20,15 @@ public:
 	CEGUI::Window *mPosText;
 	CEGUI::Window *mHitPosText;
 
+	void minimaptest(CEGUI::Window* sheet);
+	Ogre::HardwarePixelBufferSharedPtr mPixelBuffer;
+	uint16_t mLastLine;
+
+	void drawTimeLine(const Ogre::FrameEvent& evt);
+
+private:
+	Ogre::Root* mOgreRoot;
+	CEGUI::OgreRenderer* mCeRenderer;
 };
 
 #endif // _MCSHUDGUI_H_

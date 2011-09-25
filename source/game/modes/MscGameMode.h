@@ -13,7 +13,7 @@ class MscGameMode :
 	public Ogre::FrameListener
 {
 public:
-	MscGameMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, InputHandler* input);
+	MscGameMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, CEGUI::OgreRenderer* ceRenderer, InputHandler* input);
 	virtual ~MscGameMode();
 
 	// Ogre::FrameListener
@@ -39,6 +39,7 @@ protected:
 
 	Ogre::Root*			mRoot;
 	Ogre::RenderWindow* mWindow;
+	CEGUI::OgreRenderer* mCeRenderer;
 	InputHandler*		mInput;
 	McsHudGui* mHud;
 

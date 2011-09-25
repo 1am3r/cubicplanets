@@ -1,8 +1,11 @@
 #include "stdafx.h"
 #include "McsHudGui.h"
 
+#include <OGRE/Ogre.h>
+#include <CEGUI.h>
 
-McsHudGui::McsHudGui()
+McsHudGui::McsHudGui(Ogre::Root* ogreRoot, CEGUI::OgreRenderer* ceRenderer)
+	: mOgreRoot(ogreRoot), mCeRenderer(ceRenderer)
 {
 }
 
@@ -56,11 +59,104 @@ void McsHudGui::init()
 	mHitPosText->setProperty("BackgroundEnabled", "False");
 	mHitPosText->setProperty("FrameEnabled", "False");
 
+	minimaptest(sheet);
+
 	sheet->addChildWindow(crosshair);
 	sheet->addChildWindow(mFpsText);
 	sheet->addChildWindow(mPosText);
 	sheet->addChildWindow(mHitPosText);
 	CEGUI::System::getSingleton().setGUISheet(sheet);
+}
+
+void McsHudGui::minimaptest(CEGUI::Window* sheet)
+{
+	Ogre::TexturePtr tex = mOgreRoot->getTextureManager()->createManual(
+		"RTT",
+		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		Ogre::TEX_TYPE_2D,
+		1024,
+		256,
+		0,
+		Ogre::PF_R8G8B8,
+		Ogre::TU_DYNAMIC_WRITE_ONLY);
+
+	// Get the pixel buffer
+	mPixelBuffer = tex->getBuffer();
+ 
+	// Lock the pixel buffer and get a pixel box
+	mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+	const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
+ 
+	uint8_t* pDest = static_cast<uint8_t*>(pixelBox.data);
+ 
+	for (size_t j = 0; j < 512; j++)
+		for(size_t i = 0; i < 256; i++)
+		{
+			*pDest++ =   0; // B
+			*pDest++ =   0; // G
+			*pDest++ =   0; // R
+			*pDest++ = 127; // A
+		}
+ 
+	// Unlock the pixel buffer
+	mPixelBuffer->unlock();
+	mLastLine = 0;
+
+
+	CEGUI::Texture &guiTex = mCeRenderer->createTexture(tex);
+	CEGUI::Imageset &imageSet = CEGUI::ImagesetManager::getSingleton().create("RTTImageset", guiTex);
+	imageSet.defineImage("RTTImage",
+                     CEGUI::Point(0.0f, 0.0f),
+                     CEGUI::Size(guiTex.getSize().d_width,
+                                 guiTex.getSize().d_height),
+                     CEGUI::Point(0.0f, 0.0f));
+	CEGUI::Window *si = CEGUI::WindowManager::getSingleton().createWindow("TaharezLook/StaticImage", "RTTWindow");
+	si->setSize(CEGUI::UVector2(CEGUI::UDim(0.0f, 512), CEGUI::UDim(0.0f, 256)));
+	si->setPosition(CEGUI::UVector2(CEGUI::UDim(0.0f, 0), CEGUI::UDim(1.0f, -256)));
+	si->setProperty("Image", CEGUI::PropertyHelper::imageToString(&imageSet.getImage("RTTImage")));
+	si->setAlpha(0.6f);
+	si->setProperty("BackgroundEnabled", "False");
+	si->setProperty("FrameEnabled", "False");
+
+	sheet->addChildWindow(si);
+}
+
+void McsHudGui::drawTimeLine(const Ogre::FrameEvent& evt)
+{
+	uint8_t green = 0;
+
+	size_t height = static_cast<size_t>(evt.timeSinceLastFrame * 1024);
+	if (height >= 512) {
+		green = 255;
+	}
+
+	// Lock the pixel buffer and get a pixel box
+	mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
+	const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
+ 
+	uint8_t* pDest = static_cast<uint8_t*>(pixelBox.data);
+ 
+	size_t line = mLastLine * 1024 * 4;
+	uint8_t red = 0;
+	for (size_t i = 0; i < 1024 * 4; i += 4) {
+		if (i < height) {
+			red = 255;
+		} else {
+			red = 0;
+		}
+		pDest[line + (i + 0)] = 0; // B
+		pDest[line + (i + 1)] = green; // G
+		pDest[line + (i + 2)] = red; // R
+		pDest[line + (i + 3)] = 127; // A
+	}
+ 
+	// Unlock the pixel buffer
+	mPixelBuffer->unlock();
+
+	mLastLine++;
+	if (mLastLine >= 256) {
+		mLastLine = 0;
+	}
 }
 
 void McsHudGui::setFps(const Ogre::RenderTarget::FrameStats& stats)

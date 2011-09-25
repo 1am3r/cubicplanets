@@ -29,7 +29,7 @@ bool Msc::go(void)
 
 	initGui();
 
-	MscGameMode* gMode = new MscCreativeMode(mRoot, mWindow, mInput);
+	MscGameMode* gMode = new MscCreativeMode(mRoot, mWindow, mRenderer, mInput);
 	gMode->init();
 	mInput->addReceiver(gMode);
 	gMode->start();
@@ -87,7 +87,7 @@ void Msc::initOgre()
 void Msc::initGui()
 {
 	//CEGUI
-	CEGUI::OgreRenderer& mRenderer = CEGUI::OgreRenderer::bootstrapSystem();
+	mRenderer = &CEGUI::OgreRenderer::bootstrapSystem();
 
 	CEGUI::Imageset::setDefaultResourceGroup("Imagesets");
 	CEGUI::Font::setDefaultResourceGroup("Fonts");

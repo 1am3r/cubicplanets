@@ -10,7 +10,7 @@ class MscCreativeMode :
 	public MscGameMode
 {
 public:
-	MscCreativeMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, InputHandler* input);
+	MscCreativeMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, CEGUI::OgreRenderer* ceRenderer, InputHandler* input);
 	~MscCreativeMode();
 
 	// Ogre::FrameListener

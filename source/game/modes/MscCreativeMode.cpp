@@ -6,8 +6,8 @@
 #include "game/world/World.h"
 #include "game/gui/McsHudGui.h"
 
-MscCreativeMode::MscCreativeMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, InputHandler* input) :
-	MscGameMode(ogreRoot, renderWindow, input),
+MscCreativeMode::MscCreativeMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, CEGUI::OgreRenderer* ceRenderer, InputHandler* input) :
+	MscGameMode(ogreRoot, renderWindow, ceRenderer, input),
 	mFreefly(false), mCubeSelected(false)
 {
 }
@@ -126,8 +126,8 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	mLevel->updatePlayerPosition((int32_t) camPos.x, (int32_t) camPos.y, (int32_t) camPos.z);
 
 	mHud->update();
+	mHud->drawTimeLine(evt);
 
-	
 	//Picking test
 	btVector3 direction = BtOgre::Convert::toBullet(mCamera->getDerivedDirection().normalisedCopy());
 	btVector3 position = BtOgre::Convert::toBullet(mCamera->getDerivedPosition() - 0.002f);
