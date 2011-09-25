@@ -23,7 +23,7 @@ namespace GameWorld {
 	static const uint16_t ActiveRegions = 3;
 
 	static const uint32_t RegionFileSectorSize = 4 * 1024;
-	static const uint32_t ChunkFileSectorSize = 8 * 1024;
+	static const uint32_t ChunkFileSectorSize = 2 * 1024;
 
 	static inline void getFileNameFromCoords(wCoord x, wCoord z, std::ostream& out) { out << "wr_" << boost::lexical_cast<std::string>(x) << "_" << boost::lexical_cast<std::string>(z); };
 	static inline uint32_t getSectorFromOffset(uint32_t offset) { return (offset >> 8); };

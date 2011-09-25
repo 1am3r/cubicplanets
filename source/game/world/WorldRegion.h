@@ -69,7 +69,7 @@ private:
 	std::array<uint32_t, PillarsPerRegion> mPillarOffsets;
 	std::vector<bool> mFreeChunkSectors;
 	std::map<uint32_t, uint32_t> mChunkOffsets;
-	uint8_t mChunkFileHeaderSectors;
+	uint32_t mChunkFileHeaderSectors;
 
 private:
 	ChunkPillar& getPillar(uint8_t x, uint8_t z);

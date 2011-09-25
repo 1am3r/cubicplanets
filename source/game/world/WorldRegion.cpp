@@ -134,7 +134,7 @@ void WorldRegion::createChunksFile()
 	// Mark header sectors as used
 	uint32_t headerSize = static_cast<uint32_t>(mChunkFile.tellp());
 	mChunkFileHeaderSectors = ((headerSize - 1) / ChunkFileSectorSize) + 1;
-	for (uint8_t i = 0; i < mChunkFileHeaderSectors; ++i) {
+	for (uint32_t i = 0; i < mChunkFileHeaderSectors; ++i) {
 		mFreeChunkSectors[i] = false;
 	}
 	mChunkFile.sync();
