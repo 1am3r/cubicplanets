@@ -82,26 +82,7 @@ void McsHudGui::minimaptest(CEGUI::Window* sheet)
 
 	// Get the pixel buffer
 	mPixelBuffer = tex->getBuffer();
- 
-	// Lock the pixel buffer and get a pixel box
-	mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
-	const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
- 
-	uint8_t* pDest = static_cast<uint8_t*>(pixelBox.data);
- 
-	for (size_t j = 0; j < 512; j++)
-		for(size_t i = 0; i < 256; i++)
-		{
-			*pDest++ =   0; // B
-			*pDest++ =   0; // G
-			*pDest++ =   0; // R
-			*pDest++ = 127; // A
-		}
- 
-	// Unlock the pixel buffer
-	mPixelBuffer->unlock();
 	mLastLine = 0;
-
 
 	CEGUI::Texture &guiTex = mCeRenderer->createTexture(tex);
 	CEGUI::Imageset &imageSet = CEGUI::ImagesetManager::getSingleton().create("RTTImageset", guiTex);
@@ -111,8 +92,8 @@ void McsHudGui::minimaptest(CEGUI::Window* sheet)
                                  guiTex.getSize().d_height),
                      CEGUI::Point(0.0f, 0.0f));
 	CEGUI::Window *si = CEGUI::WindowManager::getSingleton().createWindow("TaharezLook/StaticImage", "RTTWindow");
-	si->setSize(CEGUI::UVector2(CEGUI::UDim(0.0f, 512), CEGUI::UDim(0.0f, 256)));
-	si->setPosition(CEGUI::UVector2(CEGUI::UDim(0.0f, 0), CEGUI::UDim(1.0f, -256)));
+	si->setSize(CEGUI::UVector2(CEGUI::UDim(0.0f, 1024), CEGUI::UDim(0.0f, 512)));
+	si->setPosition(CEGUI::UVector2(CEGUI::UDim(0.0f, 0), CEGUI::UDim(1.0f, -512)));
 	si->setProperty("Image", CEGUI::PropertyHelper::imageToString(&imageSet.getImage("RTTImage")));
 	si->setAlpha(0.6f);
 	si->setProperty("BackgroundEnabled", "False");
@@ -121,30 +102,35 @@ void McsHudGui::minimaptest(CEGUI::Window* sheet)
 	sheet->addChildWindow(si);
 }
 
-void McsHudGui::drawTimeLine(const Ogre::FrameEvent& evt)
+void McsHudGui::drawTimeLine(const Ogre::FrameEvent& evt, Ogre::Real gpuTime)
 {
 	uint8_t green = 0;
+	uint8_t red = 0;
+	uint8_t blue = 0;
 
-	size_t height = static_cast<size_t>(evt.timeSinceLastFrame * 1024);
-	if (height >= 512) {
-		green = 255;
-	}
+	size_t height = static_cast<size_t>(evt.timeSinceLastFrame * 512);
+	size_t gpu = static_cast<size_t>((gpuTime / evt.timeSinceLastFrame) * height);
+
 
 	// Lock the pixel buffer and get a pixel box
 	mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
 	const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
  
 	uint8_t* pDest = static_cast<uint8_t*>(pixelBox.data);
- 
+
 	size_t line = mLastLine * 1024 * 4;
-	uint8_t red = 0;
 	for (size_t i = 0; i < 1024 * 4; i += 4) {
-		if (i < height) {
+		if (i < gpu) {
 			red = 255;
+			green = 0;
+		} else if (i < height) {
+			red = 0;
+			green = 255;
 		} else {
 			red = 0;
+			green = 0;
 		}
-		pDest[line + (i + 0)] = 0; // B
+		pDest[line + (i + 0)] = blue; // B
 		pDest[line + (i + 1)] = green; // G
 		pDest[line + (i + 2)] = red; // R
 		pDest[line + (i + 3)] = 127; // A

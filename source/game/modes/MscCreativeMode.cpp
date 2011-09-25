@@ -2,9 +2,13 @@
 
 #include "MscCreativeMode.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "game/input/InputHandler.h"
 #include "game/world/World.h"
 #include "game/gui/McsHudGui.h"
+
+namespace btime = boost::posix_time;
 
 MscCreativeMode::MscCreativeMode(Ogre::Root* ogreRoot, Ogre::RenderWindow* renderWindow, CEGUI::OgreRenderer* ceRenderer, InputHandler* input) :
 	MscGameMode(ogreRoot, renderWindow, ceRenderer, input),
@@ -74,10 +78,15 @@ void MscCreativeMode::start()
 	mRoot->removeFrameListener(this);
 }
 
-
+bool MscCreativeMode::frameStarted(const Ogre::FrameEvent &evt)
+{
+	return true;
+}
 
 bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
+	mStart = btime::microsec_clock::local_time();
+
     if(mWindow->isClosed())
         return false;
  
@@ -126,7 +135,6 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	mLevel->updatePlayerPosition((int32_t) camPos.x, (int32_t) camPos.y, (int32_t) camPos.z);
 
 	mHud->update();
-	mHud->drawTimeLine(evt);
 
 	//Picking test
 	btVector3 direction = BtOgre::Convert::toBullet(mCamera->getDerivedDirection().normalisedCopy());
@@ -184,8 +192,11 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	ostr <<  "X: " << camPos.x << " Y: " << camPos.y << " Z: " << camPos.z;
 	mHud->setPos(ostr.str());
 
+	btime::time_duration dur = btime::microsec_clock::local_time() - mStart;
+	Ogre::Real time = static_cast<Ogre::Real>(dur.total_milliseconds()) / static_cast<Ogre::Real>(btime::seconds(1).total_milliseconds());
 	//FPS
 	mHud->setFps(mWindow->getStatistics());
+	mHud->drawTimeLine(evt, time);
 
 	return true;
 }

@@ -21,7 +21,8 @@
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/lexical_cast.hpp>
-
+#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 // Ogre includes
 #include <Ogre.h>

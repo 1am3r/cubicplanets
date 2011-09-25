@@ -24,7 +24,7 @@ public:
 	Ogre::HardwarePixelBufferSharedPtr mPixelBuffer;
 	uint16_t mLastLine;
 
-	void drawTimeLine(const Ogre::FrameEvent& evt);
+	void drawTimeLine(const Ogre::FrameEvent& evt, Ogre::Real gpuTime);
 
 private:
 	Ogre::Root* mOgreRoot;
