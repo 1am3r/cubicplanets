@@ -198,7 +198,7 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	Ogre::Real time = static_cast<Ogre::Real>(dur.total_milliseconds()) / static_cast<Ogre::Real>(btime::seconds(1).total_milliseconds());
 	//FPS
 	mHud->setFps(mWindow->getStatistics());
-	mHud->drawTimeLine(evt, 0, time, 0);
+	mHud->drawTimeLine(evt, time, 0.2f, 0.1f);
 
 	return true;
 }

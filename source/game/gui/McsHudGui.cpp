@@ -284,10 +284,15 @@ void FrameGraphRenderable::drawGraphLine(TimeGraphLine& line, uint16_t graphLine
 {
 	Ogre::Real ogreTop, bulletTop, worldTop, unknownTop;
 
-	ogreTop = (line.ogre / mCurrentScaling) * 2 - 1.0f;
-	bulletTop = (line.bullet / mCurrentScaling) * 2 - 1.0f;
-	worldTop = (line.world / mCurrentScaling) * 2 - 1.0f;
-	unknownTop = (line.total / mCurrentScaling) * 2 - 1.0f;
+	ogreTop = (line.ogre / mCurrentScaling);
+	bulletTop = ogreTop + (line.bullet / mCurrentScaling);
+	worldTop = bulletTop + (line.world / mCurrentScaling);
+	unknownTop = worldTop + (line.total / mCurrentScaling);
+	
+	ogreTop = ogreTop * 2 - 1.0f;
+	bulletTop = bulletTop * 2 - 1.0f;
+	worldTop = worldTop * 2 - 1.0f;
+	unknownTop = unknownTop * 2 - 1.0f;
 
 	Ogre::HardwareVertexBufferSharedPtr vbuf = mRenderOp.vertexData->vertexBufferBinding->getBuffer(0);
 	Ogre::Real *vertices = static_cast<Ogre::Real*>(vbuf->lock(Ogre::HardwareBuffer::HBL_NORMAL));
@@ -317,10 +322,15 @@ void FrameGraphRenderable::redrawGraph()
 	Ogre::Real *vertices = static_cast<Ogre::Real*>(vbuf->lock(Ogre::HardwareBuffer::HBL_NORMAL));
 
 	for (size_t i = 0; i < mNumFrames; i++) {
-		ogreTop = (mlastTimes[i].ogre / mCurrentScaling) * 2 - 1.0f;
-		bulletTop = (mlastTimes[i].bullet / mCurrentScaling) * 2 - 1.0f;
-		worldTop = (mlastTimes[i].world / mCurrentScaling) * 2 - 1.0f;
-		unknownTop = (mlastTimes[i].total / mCurrentScaling) * 2 - 1.0f;
+		ogreTop = (mlastTimes[i].ogre / mCurrentScaling);
+		bulletTop = ogreTop + (mlastTimes[i].bullet / mCurrentScaling);
+		worldTop = bulletTop + (mlastTimes[i].world / mCurrentScaling);
+		unknownTop = worldTop + (mlastTimes[i].total / mCurrentScaling);
+
+		ogreTop = ogreTop * 2 - 1.0f;
+		bulletTop = bulletTop * 2 - 1.0f;
+		worldTop = worldTop * 2 - 1.0f;
+		unknownTop = unknownTop * 2 - 1.0f;
 
 		// Set the ogre line top vertex
 		vertices[ 4] = ogreTop;
