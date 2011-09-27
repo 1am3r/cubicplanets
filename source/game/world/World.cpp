@@ -43,7 +43,7 @@ World::World(uint32_t seed, Ogre::SceneManager* sceneMgr)
 	mWorld = new btDiscreteDynamicsWorld(mDispatcher, mBroadphase, mSolver, mCollisionConfig);
 	mWorld->setGravity(btVector3(0, (btScalar) -9.8f, 0));
 
-	mDebugDrawer = new BtOgre::DebugDrawer(mSceneMgr->getRootSceneNode(), mWorld);
+	mDebugDrawer = new BtOgre::DebugDrawer(mSceneMgr->getRootSceneNode()->createChildSceneNode("DebugDrawerNode") , mWorld);
 	mWorld->setDebugDrawer(mDebugDrawer);
 	mDebugDrawer->setDebugMode(0);
 
@@ -171,18 +171,6 @@ void World::prepareRegion(wCoord x, wCoord y, wCoord z)
 		}
 	}
 }
-
-
-//void World::updateChunk(Chunk& curChunk)
-//{
-//	curChunk.setModified();
-//	curChunk.update();
-//}
-//
-//void World::updateChunk(wCoord xPos, wCoord yPos, wCoord zPos)
-//{
-//	updateChunk(*getChunk(xPos, yPos, zPos));
-//}
 
 
 void World::setCubeType(Point3& position, uint8_t cubeType)

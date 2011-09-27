@@ -80,6 +80,8 @@ void MscCreativeMode::start()
 
 bool MscCreativeMode::frameStarted(const Ogre::FrameEvent &evt)
 {
+	MscGameMode::frameStarted(evt);
+
 	return true;
 }
 

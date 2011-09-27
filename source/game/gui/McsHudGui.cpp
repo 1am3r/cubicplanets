@@ -4,17 +4,18 @@
 #include <OGRE/Ogre.h>
 #include <CEGUI.h>
 
-const Ogre::Real McsHudGui::TimeGraphLineSpace = (2.0f / (TimeGraphMaxFrames));
-
 McsHudGui::McsHudGui(Ogre::Root* ogreRoot, CEGUI::OgreRenderer* ceRenderer)
-	: mOgreRoot(ogreRoot), mCeRenderer(ceRenderer)
+	: mOgreRoot(ogreRoot), mCeRenderer(ceRenderer), mFrameLines(0)
 {
-	mlastTimes.fill(TimeGraphLine(0.0f, 0.0f, 0.0f, 0.0f));
+	
 }
 
 
 McsHudGui::~McsHudGui()
 {
+	if (mFrameLines) {
+		delete mFrameLines;
+	}
 }
 
 
@@ -77,14 +78,6 @@ void McsHudGui::addFrameGraph(CEGUI::Window* sheet)
 		"FrameGraph", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D,
 		TimeGraphMaxFrames, TimeGraphMaxResolution, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET);
 
-	// Get the pixel buffer
-	mPixelBuffer = tex->getBuffer();
-	mLastLine = 0;
-	mSmallerScaling = 0;
-	mCurrentScaling = 1.0f;
-
-
-
 	Ogre::SceneManager* debugSceneMgr = mOgreRoot->createSceneManager(Ogre::ST_GENERIC);
     debugSceneMgr->setAmbientLight(Ogre::ColourValue(1.0f, 1.0f, 1.0f));
 
@@ -93,112 +86,15 @@ void McsHudGui::addFrameGraph(CEGUI::Window* sheet)
 	frameLinesMaterial->getTechnique(0)->setLightingEnabled(false);
 	frameLinesMaterial->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
 	frameLinesMaterial->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
-
-	// Create the mesh via the MeshManager
-	Ogre::MeshPtr msh = Ogre::MeshManager::getSingleton().createManual("frameGraphMesh", "Game");
-	/// Create one submesh
-	Ogre::SubMesh* sub = msh->createSubMesh();
-	Ogre::RenderSystem* rs = Ogre::Root::getSingleton().getRenderSystem();
 	
-	size_t numVertices = TimeGraphMaxFrames * 8;
-	size_t numIndices = TimeGraphMaxFrames * 8;
-	float* vertices = new float[numVertices * 3];
-	Ogre::RGBA* colours = new Ogre::RGBA[numVertices];
-	Ogre::RGBA* pColours = colours;
-	uint16_t* indices = new uint16_t[numIndices];
-	uint16_t index = 0;
-	for (uint16_t i = 0; i < TimeGraphMaxFrames; i++) {
-		float x = i * TimeGraphLineSpace - 1.0f;
-		
-		// OgreTime line
-		vertices[index +  0] = x; vertices[index +  1] = -1; vertices[index +  2] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(1.0f, 0.0f, 0.0f), pColours++);		// Color
-		vertices[index +  3] = x; vertices[index +  4] =  0; vertices[index +  5] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(1.0f, 0.0f, 0.0f), pColours++);		// Color
-
-		// BulletTime line
-		vertices[index +  6] = x; vertices[index +  7] =  0; vertices[index +  8] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(0.0f, 1.0f, 0.0f), pColours++);		// Color
-		vertices[index +  9] = x; vertices[index + 10] =  0; vertices[index + 11] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(0.0f, 1.0f, 0.0f), pColours++);		// Color
-
-		// WorldTime line
-		vertices[index + 12] = x; vertices[index + 13] =  0; vertices[index + 14] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(0.0f, 0.0f, 1.0f), pColours++);		// Color
-		vertices[index + 15] = x; vertices[index + 16] =  0; vertices[index + 17] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(0.0f, 0.0f, 1.0f), pColours++);		// Color
-
-		// UnknownTime line
-		vertices[index + 18] = x; vertices[index + 19] =  0; vertices[index + 20] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(1.0f, 1.0f, 1.0f), pColours++);		// Color
-		vertices[index + 21] = x; vertices[index + 22] =  0; vertices[index + 23] = 0;	// Vertex
-		rs->convertColourValue(Ogre::ColourValue(1.0f, 1.0f, 1.0f), pColours++);		// Color
-
-		index += 24;
-	}
-	for (uint16_t i = 0; i < TimeGraphMaxFrames * 8; i++) {
-		indices[i] = i;
-	}
-
-	// Create vertex data structure for numVertices vertices shared between submeshes
-	msh->sharedVertexData = new Ogre::VertexData();
-	msh->sharedVertexData->vertexCount = numVertices;
-
-	// Create declaration (memory format) of vertex data
-	Ogre::VertexDeclaration* decl = msh->sharedVertexData->vertexDeclaration;
-	decl->addElement(0, 0, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
-	size_t offset = Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-	// Allocate vertex buffer of the requested number of vertices (vertexCount) and bytes per vertex (offset)
-	Ogre::HardwareVertexBufferSharedPtr vbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
-		offset, msh->sharedVertexData->vertexCount, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
-	// Upload the vertex data to the card
-	vbuf->writeData(0, vbuf->getSizeInBytes(), vertices, true);
-	// Set vertex buffer binding so buffer 0 is bound to our vertex buffer
-	Ogre::VertexBufferBinding* bind = msh->sharedVertexData->vertexBufferBinding;
-	bind->setBinding(0, vbuf);
-
-	decl->addElement(1, 0, Ogre::VET_COLOUR, Ogre::VES_DIFFUSE);
-	offset = Ogre::VertexElement::getTypeSize(Ogre::VET_COLOUR);
-	// Allocate vertex buffer of the requested number of vertices (vertexCount) and bytes per vertex (offset)
-	vbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
-		offset, msh->sharedVertexData->vertexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-	// Upload the vertex data to the card
-	vbuf->writeData(0, vbuf->getSizeInBytes(), colours, true);
-	// Set vertex buffer binding so buffer 1 is bound to our colour buffer
-	bind->setBinding(1, vbuf);
-
-	// Allocate index buffer of the requested number of vertices (ibufCount) 
-	Ogre::HardwareIndexBufferSharedPtr ibuf = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
-		Ogre::HardwareIndexBuffer::IT_16BIT, numIndices, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
-	// Upload the index data to the card
-	ibuf->writeData(0, ibuf->getSizeInBytes(), indices, true);
-
-	// Set parameters of the submesh
-	sub->useSharedVertices = true;
-	sub->indexData->indexBuffer = ibuf;
-	sub->indexData->indexCount = numIndices;
-	sub->indexData->indexStart = 0;
-	// Set bounding information (for culling)
-	Ogre::AxisAlignedBox aabb; aabb.setInfinite(); 
-	msh->_setBounds(aabb);
-	msh->_setBoundingSphereRadius(Ogre::Real(10.0f));
-	// Notify -Mesh object that it has been loaded
-	msh->load();
-
-	Ogre::Entity* frameLines = debugSceneMgr->createEntity("frameGraphEnt", "frameGraphMesh");
-	frameLines->setMaterialName("frameLinesMaterial");
-
-	//Ogre::SimpleRenderable* frameLines = debugSceneMgr->
-
-	delete[] vertices;
-	delete[] colours;
-	delete[] indices;
+	mFrameLines = new FrameGraphRenderable(TimeGraphMaxFrames, TimeGraphMaxResolution);
+	mFrameLines->setMaterial("frameLinesMaterial");
 
 	Ogre::SceneNode* frameLinesNode = debugSceneMgr->getRootSceneNode()->createChildSceneNode("frameGraph_node");
-	frameLinesNode->attachObject(frameLines);
+	frameLinesNode->attachObject(mFrameLines);
 	Ogre::Camera* dbg_camera = debugSceneMgr->createCamera("item_camera");
 	dbg_camera->setAspectRatio(static_cast<Ogre::Real>(TimeGraphMaxFrames) / static_cast<Ogre::Real>(TimeGraphMaxResolution));
-	Ogre::Viewport *v = mPixelBuffer->getRenderTarget()->addViewport(dbg_camera);
+	Ogre::Viewport *v = tex->getBuffer()->getRenderTarget()->addViewport(dbg_camera);
 	v->setClearEveryFrame( true );
 	v->setBackgroundColour( Ogre::ColourValue::Black );
 
@@ -218,99 +114,11 @@ void McsHudGui::addFrameGraph(CEGUI::Window* sheet)
 	sheet->addChildWindow(si);
 }
 
-void McsHudGui::drawTimeLine(const Ogre::FrameEvent& evt, Ogre::Real bulletTime, Ogre::Real ogreTime, Ogre::Real worldTime)
+void McsHudGui::drawTimeLine(const Ogre::FrameEvent& evt, Ogre::Real ogreTime, Ogre::Real bulletTime, Ogre::Real worldTime)
 {
-
-
-
-
-
-
-	return;
-
-
-
-
-	//bool redraw = false;
-
-	//mlastTimes[mLastLine].set(evt.timeSinceLastFrame, 0, ogreTime, 0);
-
-	//if (evt.timeSinceLastFrame > mCurrentScaling) {
-	//	mCurrentScaling *= std::ceil(evt.timeSinceLastFrame / mCurrentScaling);
-	//	redraw = true;
-	//	mSmallerScaling = 0;
-	//} else {
-	//	if (evt.timeSinceLastFrame < mCurrentScaling / 2) {
-	//		mSmallerScaling++;
-	//		if (mSmallerScaling >= 256 && (mCurrentScaling / 2) >= 0.6f) {
-	//			mCurrentScaling /= 2;
-	//			redraw = true;
-	//			mSmallerScaling = 0;
-	//		}
-	//	}
-	//}
-
-	//if (redraw) {
-	//	for (uint16_t i = 0; i < TimeGraphMaxLines; i++) {
-	//		drawGraphLine(mlastTimes[i], i);
-	//	}
-	//} else {
-	//	drawGraphLine(mlastTimes[mLastLine], mLastLine);
-	//}
-
-	//mLastLine++;
-	//if (mLastLine >= TimeGraphMaxLines) {
-	//	mLastLine = 0;
-	//}
-}
-
-void McsHudGui::drawGraphLine(TimeGraphLine& line, uint16_t graphLine)
-{
-	uint16_t ogreLine, bulletLine, worldLine, unknownLine;
-
-	ogreLine = static_cast<uint16_t>((line.ogre / mCurrentScaling) * TimeGraphMaxResolution);
-	bulletLine = static_cast<uint16_t>((line.bullet / mCurrentScaling) * TimeGraphMaxResolution);
-	worldLine = static_cast<uint16_t>((line.world / mCurrentScaling) * TimeGraphMaxResolution);
-	unknownLine = static_cast<uint16_t>((line.total / mCurrentScaling) * TimeGraphMaxResolution);
-
-	bulletLine += ogreLine;
-	worldLine += bulletLine;
-
-	// Lock the pixel buffer and get a pixel box
-	mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_NORMAL); // for best performance use HBL_DISCARD!
-	const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
- 
-	uint32_t* pDest = static_cast<uint32_t*>(pixelBox.data);
-	// Point to start of the line
-	pDest += graphLine * TimeGraphMaxResolution;
-
-	// Start with drawing the ogreTime
-	for (size_t i = 0; i < ogreLine; i++) {
-		pDest[i] = TimeGraphOgreColor;
+	if (mFrameLines) {
+		mFrameLines->drawTimeLine(evt, ogreTime, bulletTime, worldTime);
 	}
-
-	// Now the bulletTime
-	for (size_t i = ogreLine; i < bulletLine; i++) {
-		pDest[i] = TimeGraphBulletColor;
-	}
-	
-	// Now the worldTime
-	for (size_t i = bulletLine; i < worldLine; i++) {
-		pDest[i] = TimeGraphWorldColor;
-	}
-	
-	// Now the unknownTime
-	for (size_t i = worldLine; i < unknownLine; i++) {
-		pDest[i] = TimeGraphUnknownColor;
-	}
-
-	// Now black for the rest of the line
-	for (size_t i = unknownLine; i < TimeGraphMaxResolution; i++) {
-		pDest[i] = TimeGraphBlackColor;
-	}
-
-	// Done, unlock the pixel buffer
-	mPixelBuffer->unlock();
 }
 
 void McsHudGui::setFps(const Ogre::RenderTarget::FrameStats& stats)
@@ -331,4 +139,203 @@ void McsHudGui::setHitPos(const CEGUI::String& text)
 void McsHudGui::setPos(const CEGUI::String& text)
 {
 	mPosText->setText(text);
+}
+
+FrameGraphRenderable::FrameGraphRenderable(uint16_t frames, uint16_t resolution)
+	: mNumFrames(frames), mResolution(resolution), mLastLine(0), mSmallerScaling(0), mCurrentScaling(1.0f)
+{
+	mlastTimes = new TimeGraphLine[mNumFrames];
+
+	// use identity projection and view matrices
+	mUseIdentityProjection = true;
+	mUseIdentityView = true;
+
+	mNumVertices = mNumFrames * 8;
+	mLineSpace = (2.0f / (mNumFrames));
+
+	mRenderOp.vertexData = new Ogre::VertexData();
+
+	mRenderOp.indexData = 0;
+	mRenderOp.vertexData->vertexCount = mNumVertices; 
+	mRenderOp.vertexData->vertexStart = 0; 
+	mRenderOp.operationType = Ogre::RenderOperation::OT_LINE_LIST; 
+	mRenderOp.useIndexes = false;
+
+	// Set the vertex declarations
+	mRenderOp.vertexData->vertexDeclaration->addElement(0, 0, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
+	mRenderOp.vertexData->vertexDeclaration->addElement(1, 0, Ogre::VET_COLOUR, Ogre::VES_DIFFUSE);
+
+	createHardwareBuffers();
+	fillHardwareBuffers();
+}
+
+void FrameGraphRenderable::createHardwareBuffers()
+{
+	// Allocate vertex buffer of the requested number of vertices (vertexCount) and bytes per vertex
+	Ogre::HardwareVertexBufferSharedPtr vbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+		mRenderOp.vertexData->vertexDeclaration->getVertexSize(0), mRenderOp.vertexData->vertexCount, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY);
+
+	// Set vertex buffer binding so buffer 0 is bound to our vertex buffer
+	mRenderOp.vertexData->vertexBufferBinding->setBinding(0, vbuf);
+
+	// Allocate vertex buffer of the requested number of vertices (vertexCount) and bytes per vertex
+	vbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+		mRenderOp.vertexData->vertexDeclaration->getVertexSize(1), mRenderOp.vertexData->vertexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+	
+	// Set vertex buffer binding so buffer 1 is bound to our colour buffer
+	mRenderOp.vertexData->vertexBufferBinding->setBinding(1, vbuf);
+}
+
+void FrameGraphRenderable::fillHardwareBuffers()
+{
+	Ogre::HardwareVertexBufferSharedPtr vbuf = mRenderOp.vertexData->vertexBufferBinding->getBuffer(0);
+	Ogre::Real *vertices = static_cast<Ogre::Real*>(vbuf->lock(Ogre::HardwareBuffer::HBL_NORMAL));
+
+	Ogre::HardwareVertexBufferSharedPtr vcbuf = mRenderOp.vertexData->vertexBufferBinding->getBuffer(1);
+	Ogre::RGBA* pColours = static_cast<Ogre::RGBA*>(vcbuf->lock(Ogre::HardwareBuffer::HBL_NORMAL));
+
+	Ogre::RenderSystem* rs = Ogre::Root::getSingleton().getRenderSystem();
+	uint16_t index = 0;
+	for (uint16_t i = 0; i < mNumFrames; i++) {
+		float x = i * mLineSpace - 1.0f;
+		
+		// OgreTime line
+		vertices[index +  0] = x; vertices[index +  1] = -1; vertices[index +  2] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(1.0f, 0.0f, 0.0f), pColours++);		// Color
+		vertices[index +  3] = x; vertices[index +  4] = -1; vertices[index +  5] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(1.0f, 0.0f, 0.0f), pColours++);		// Color
+
+		// BulletTime line
+		vertices[index +  6] = x; vertices[index +  7] = -1; vertices[index +  8] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(0.0f, 1.0f, 0.0f), pColours++);		// Color
+		vertices[index +  9] = x; vertices[index + 10] = -1; vertices[index + 11] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(0.0f, 1.0f, 0.0f), pColours++);		// Color
+
+		// WorldTime line
+		vertices[index + 12] = x; vertices[index + 13] = -1; vertices[index + 14] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(0.0f, 0.0f, 1.0f), pColours++);		// Color
+		vertices[index + 15] = x; vertices[index + 16] = -1; vertices[index + 17] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(0.0f, 0.0f, 1.0f), pColours++);		// Color
+
+		// UnknownTime line
+		vertices[index + 18] = x; vertices[index + 19] = -1; vertices[index + 20] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(1.0f, 1.0f, 1.0f), pColours++);		// Color
+		vertices[index + 21] = x; vertices[index + 22] = -1; vertices[index + 23] = 0;	// Vertex
+		rs->convertColourValue(Ogre::ColourValue(1.0f, 1.0f, 1.0f), pColours++);		// Color
+
+		index += ValuesPerGraphLine;
+	}
+	vcbuf->unlock();
+	vbuf->unlock();
+
+	mBox.setInfinite();
+}
+
+Ogre::Real FrameGraphRenderable::getBoundingRadius(void) const
+{
+  return Ogre::Math::Sqrt(std::max(mBox.getMaximum().squaredLength(), mBox.getMinimum().squaredLength()));
+}
+ 
+Ogre::Real FrameGraphRenderable::getSquaredViewDepth(const Ogre::Camera* cam) const
+{
+   Ogre::Vector3 vMin, vMax, vMid, vDist;
+   vMin = mBox.getMinimum();
+   vMax = mBox.getMaximum();
+   vMid = ((vMax - vMin) * 0.5) + vMin;
+   vDist = cam->getDerivedPosition() - vMid;
+ 
+   return vDist.squaredLength();
+}
+
+void FrameGraphRenderable::drawTimeLine(const Ogre::FrameEvent& evt, Ogre::Real ogreTime, Ogre::Real bulletTime, Ogre::Real worldTime)
+{
+	bool redraw = false;
+
+	mlastTimes[mLastLine].set(evt.timeSinceLastFrame, ogreTime, bulletTime, worldTime);
+
+	if (evt.timeSinceLastFrame > mCurrentScaling) {
+		mCurrentScaling *= std::ceil(evt.timeSinceLastFrame / mCurrentScaling);
+		redraw = true;
+		mSmallerScaling = 0;
+	} else {
+		if (evt.timeSinceLastFrame <= mCurrentScaling) {
+			mSmallerScaling++;
+			if (mSmallerScaling >= mNumFrames && mCurrentScaling >= 0.01f) {
+				mCurrentScaling /= 2;
+				redraw = true;
+				mSmallerScaling = 0;
+			}
+		}
+	}
+
+	if (redraw) {
+		redrawGraph();
+	} else {
+		drawGraphLine(mlastTimes[mLastLine], mLastLine);
+	}
+
+	mLastLine++;
+	if (mLastLine >= mNumFrames) {
+		mLastLine = 0;
+	}
+}
+
+void FrameGraphRenderable::drawGraphLine(TimeGraphLine& line, uint16_t graphLine)
+{
+	Ogre::Real ogreTop, bulletTop, worldTop, unknownTop;
+
+	ogreTop = (line.ogre / mCurrentScaling) * 2 - 1.0f;
+	bulletTop = (line.bullet / mCurrentScaling) * 2 - 1.0f;
+	worldTop = (line.world / mCurrentScaling) * 2 - 1.0f;
+	unknownTop = (line.total / mCurrentScaling) * 2 - 1.0f;
+
+	Ogre::HardwareVertexBufferSharedPtr vbuf = mRenderOp.vertexData->vertexBufferBinding->getBuffer(0);
+	Ogre::Real *vertices = static_cast<Ogre::Real*>(vbuf->lock(Ogre::HardwareBuffer::HBL_NORMAL));
+
+	vertices += graphLine * ValuesPerGraphLine;
+
+	// Set the ogre line top vertex
+	vertices[ 4] = ogreTop;
+	// Set the bullet line vertices
+	vertices[ 7] = ogreTop;
+	vertices[10] = bulletTop;
+	// Set the world line vertices
+	vertices[13] = bulletTop;
+	vertices[16] = worldTop;
+	// Set the unknown line vertices
+	vertices[19] = worldTop;
+	vertices[22] = unknownTop;
+
+	vbuf->unlock();
+}
+
+void FrameGraphRenderable::redrawGraph()
+{
+	Ogre::Real ogreTop, bulletTop, worldTop, unknownTop;
+
+	Ogre::HardwareVertexBufferSharedPtr vbuf = mRenderOp.vertexData->vertexBufferBinding->getBuffer(0);
+	Ogre::Real *vertices = static_cast<Ogre::Real*>(vbuf->lock(Ogre::HardwareBuffer::HBL_NORMAL));
+
+	for (size_t i = 0; i < mNumFrames; i++) {
+		ogreTop = (mlastTimes[i].ogre / mCurrentScaling) * 2 - 1.0f;
+		bulletTop = (mlastTimes[i].bullet / mCurrentScaling) * 2 - 1.0f;
+		worldTop = (mlastTimes[i].world / mCurrentScaling) * 2 - 1.0f;
+		unknownTop = (mlastTimes[i].total / mCurrentScaling) * 2 - 1.0f;
+
+		// Set the ogre line top vertex
+		vertices[ 4] = ogreTop;
+		// Set the bullet line vertices
+		vertices[ 7] = ogreTop;
+		vertices[10] = bulletTop;
+		// Set the world line vertices
+		vertices[13] = bulletTop;
+		vertices[16] = worldTop;
+		// Set the unknown line vertices
+		vertices[19] = worldTop;
+		vertices[22] = unknownTop;
+
+		vertices += ValuesPerGraphLine;
+	}
+
+	vbuf->unlock();
 }
