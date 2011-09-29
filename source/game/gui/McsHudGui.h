@@ -69,7 +69,7 @@ protected:
 
 protected:
 	struct TimeGraphLine {
-		Ogre::Real total;
+		Ogre::Real unknown;
 		Ogre::Real ogre;
 		Ogre::Real bullet;
 		Ogre::Real world;
@@ -79,14 +79,14 @@ protected:
 			set(0.0f, 0.0f, 0.0f, 0.0f);
 		};
 
-		TimeGraphLine(Ogre::Real totalTime, Ogre::Real ogreTime, Ogre::Real bulletTime, Ogre::Real worldTime)
+		TimeGraphLine(Ogre::Real unknownTime, Ogre::Real ogreTime, Ogre::Real bulletTime, Ogre::Real worldTime)
 		{
-			set(totalTime, bulletTime, ogreTime, worldTime);
+			set(unknownTime, bulletTime, ogreTime, worldTime);
 		};
 
-		void set(Ogre::Real totalTime, Ogre::Real ogreTime, Ogre::Real bulletTime, Ogre::Real worldTime)
+		void set(Ogre::Real unknownTime, Ogre::Real ogreTime, Ogre::Real bulletTime, Ogre::Real worldTime)
 		{
-			total = totalTime;
+			unknown = unknownTime;
 			ogre = ogreTime;
 			bullet = bulletTime;
 			world = worldTime;

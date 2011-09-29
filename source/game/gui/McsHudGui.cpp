@@ -10,7 +10,6 @@ McsHudGui::McsHudGui(Ogre::Root* ogreRoot, CEGUI::OgreRenderer* ceRenderer)
 	
 }
 
-
 McsHudGui::~McsHudGui()
 {
 	if (mFrameLines) {
@@ -251,7 +250,8 @@ void FrameGraphRenderable::drawTimeLine(const Ogre::FrameEvent& evt, Ogre::Real 
 {
 	bool redraw = false;
 
-	mlastTimes[mLastLine].set(evt.timeSinceLastFrame, ogreTime, bulletTime, worldTime);
+	Ogre::Real unknownTime = evt.timeSinceLastFrame - (ogreTime + bulletTime + worldTime);
+	mlastTimes[mLastLine].set(unknownTime, ogreTime, bulletTime, worldTime);
 
 	if (evt.timeSinceLastFrame > mCurrentScaling) {
 		mCurrentScaling *= std::ceil(evt.timeSinceLastFrame / mCurrentScaling);
@@ -287,7 +287,7 @@ void FrameGraphRenderable::drawGraphLine(TimeGraphLine& line, uint16_t graphLine
 	ogreTop = (line.ogre / mCurrentScaling);
 	bulletTop = ogreTop + (line.bullet / mCurrentScaling);
 	worldTop = bulletTop + (line.world / mCurrentScaling);
-	unknownTop = worldTop + (line.total / mCurrentScaling);
+	unknownTop = worldTop + (line.unknown / mCurrentScaling);
 	
 	ogreTop = ogreTop * 2 - 1.0f;
 	bulletTop = bulletTop * 2 - 1.0f;
@@ -325,7 +325,7 @@ void FrameGraphRenderable::redrawGraph()
 		ogreTop = (mlastTimes[i].ogre / mCurrentScaling);
 		bulletTop = ogreTop + (mlastTimes[i].bullet / mCurrentScaling);
 		worldTop = bulletTop + (mlastTimes[i].world / mCurrentScaling);
-		unknownTop = worldTop + (mlastTimes[i].total / mCurrentScaling);
+		unknownTop = worldTop + (mlastTimes[i].unknown / mCurrentScaling);
 
 		ogreTop = ogreTop * 2 - 1.0f;
 		bulletTop = bulletTop * 2 - 1.0f;

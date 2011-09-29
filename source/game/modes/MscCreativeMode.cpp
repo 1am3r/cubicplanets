@@ -80,6 +80,8 @@ void MscCreativeMode::start()
 
 bool MscCreativeMode::frameStarted(const Ogre::FrameEvent &evt)
 {
+	mStart = btime::microsec_clock::local_time();
+
 	MscGameMode::frameStarted(evt);
 
 	return true;
@@ -87,7 +89,7 @@ bool MscCreativeMode::frameStarted(const Ogre::FrameEvent &evt)
 
 bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 {
-	mStart = btime::microsec_clock::local_time();
+	btime::time_duration ogreDur = btime::microsec_clock::local_time() - mStart;
 
     if(mWindow->isClosed())
         return false;
@@ -116,7 +118,11 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 	//mCharacter->updateAction(mWorld->getBulletCollisionWorld(),evt.timeSinceLastFrame);
 
+	btime::ptime worldStart = btime::microsec_clock::local_time();
+
 	mLevel->update(evt);
+
+	btime::time_duration worldDur = btime::microsec_clock::local_time() - worldStart;
 
 	//btTransform tr = mCharacter->getGhostObject()->getWorldTransform();
 	//btVector3 before = tr.getOrigin();
@@ -194,11 +200,12 @@ bool MscCreativeMode::frameRenderingQueued(const Ogre::FrameEvent& evt)
 	ostr <<  "X: " << camPos.x << " Y: " << camPos.y << " Z: " << camPos.z;
 	mHud->setPos(ostr.str());
 
-	btime::time_duration dur = btime::microsec_clock::local_time() - mStart;
-	Ogre::Real time = static_cast<Ogre::Real>(dur.total_milliseconds()) / static_cast<Ogre::Real>(btime::seconds(1).total_milliseconds());
 	//FPS
 	mHud->setFps(mWindow->getStatistics());
-	mHud->drawTimeLine(evt, time, 0.2f, 0.1f);
+
+	Ogre::Real ogreTime = static_cast<Ogre::Real>(ogreDur.total_milliseconds()) / static_cast<Ogre::Real>(btime::seconds(1).total_milliseconds());
+	Ogre::Real worldTime = static_cast<Ogre::Real>(worldDur.total_milliseconds()) / static_cast<Ogre::Real>(btime::seconds(1).total_milliseconds());
+	mHud->drawTimeLine(evt, ogreTime, 0.0f, worldTime);
 
 	return true;
 }
